@@ -1,0 +1,1123 @@
+
+<!DOCTYPE html>
+
+<html dir="ltr" lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<meta name="google" value="notranslate">
+
+<script>
+function addRow(name, url, isdir,
+    size, size_string, date_modified, date_modified_string) {
+  if (name == "." || name == "..")
+    return;
+
+  var root = document.location.pathname;
+  if (root.substr(-1) !== "/")
+    root += "/";
+
+  var tbody = document.getElementById("tbody");
+  var row = document.createElement("tr");
+  var file_cell = document.createElement("td");
+  var link = document.createElement("a");
+
+  link.className = isdir ? "icon dir" : "icon file";
+
+  if (isdir) {
+    name = name + "/";
+    url = url + "/";
+    size = 0;
+    size_string = "";
+  } else {
+    link.draggable = "true";
+    link.addEventListener("dragstart", onDragStart, false);
+  }
+  link.innerText = name;
+  link.href = root + url;
+
+  file_cell.dataset.value = name;
+  file_cell.appendChild(link);
+
+  row.appendChild(file_cell);
+  row.appendChild(createCell(size, size_string));
+  row.appendChild(createCell(date_modified, date_modified_string));
+
+  tbody.appendChild(row);
+}
+
+function onDragStart(e) {
+  var el = e.srcElement;
+  var name = el.innerText.replace(":", "");
+  var download_url_data = "application/octet-stream:" + name + ":" + el.href;
+  e.dataTransfer.setData("DownloadURL", download_url_data);
+  e.dataTransfer.effectAllowed = "copy";
+}
+
+function createCell(value, text) {
+  var cell = document.createElement("td");
+  cell.setAttribute("class", "detailsColumn");
+  cell.dataset.value = value;
+  cell.innerText = text;
+  return cell;
+}
+
+function start(location) {
+  var header = document.getElementById("header");
+  header.innerText = header.innerText.replace("LOCATION", location);
+
+  document.getElementById("title").innerText = header.innerText;
+}
+
+function onHasParentDirectory() {
+  var box = document.getElementById("parentDirLinkBox");
+  box.style.display = "block";
+
+  var root = document.location.pathname;
+  if (!root.endsWith("/"))
+    root += "/";
+
+  var link = document.getElementById("parentDirLink");
+  link.href = root + "..";
+}
+
+function sortTable(column) {
+  var theader = document.getElementById("theader");
+  var oldOrder = theader.cells[column].dataset.order || '1';
+  oldOrder = parseInt(oldOrder, 10)
+  var newOrder = 0 - oldOrder;
+  theader.cells[column].dataset.order = newOrder;
+
+  var tbody = document.getElementById("tbody");
+  var rows = tbody.rows;
+  var list = [], i;
+  for (i = 0; i < rows.length; i++) {
+    list.push(rows[i]);
+  }
+
+  list.sort(function(row1, row2) {
+    var a = row1.cells[column].dataset.value;
+    var b = row2.cells[column].dataset.value;
+    if (column) {
+      a = parseInt(a, 10);
+      b = parseInt(b, 10);
+      return a > b ? newOrder : a < b ? oldOrder : 0;
+    }
+
+    // Column 0 is text.
+    if (a > b)
+      return newOrder;
+    if (a < b)
+      return oldOrder;
+    return 0;
+  });
+
+  // Appending an existing child again just moves it.
+  for (i = 0; i < list.length; i++) {
+    tbody.appendChild(list[i]);
+  }
+}
+
+// Add event handlers to column headers.
+function addHandlers(element, column) {
+  element.onclick = (e) => sortTable(column);
+  element.onkeydown = (e) => {
+    if (e.key == 'Enter' || e.key == ' ') {
+      sortTable(column);
+      e.preventDefault();
+    }
+  };
+}
+
+function onLoad() {
+  addHandlers(document.getElementById('nameColumnHeader'), 0);
+  addHandlers(document.getElementById('sizeColumnHeader'), 1);
+  addHandlers(document.getElementById('dateColumnHeader'), 2);
+}
+
+window.addEventListener('DOMContentLoaded', onLoad);
+</script>
+
+<style>
+
+  h1 {
+    border-bottom: 1px solid #c0c0c0;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    white-space: nowrap;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  th {
+    cursor: pointer;
+  }
+
+  td.detailsColumn {
+    padding-inline-start: 2em;
+    text-align: end;
+    white-space: nowrap;
+  }
+
+  a.icon {
+    padding-inline-start: 1.5em;
+    text-decoration: none;
+    user-select: auto;
+  }
+
+  a.icon:hover {
+    text-decoration: underline;
+  }
+
+  a.file {
+    background : url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAABnRSTlMAAAAAAABupgeRAAABEElEQVR42nRRx3HDMBC846AHZ7sP54BmWAyrsP588qnwlhqw/k4v5ZwWxM1hzmGRgV1cYqrRarXoH2w2m6qqiqKIR6cPtzc3xMSML2Te7XZZlnW7Pe/91/dX47WRBHuA9oyGmRknzGDjab1ePzw8bLfb6WRalmW4ip9FDVpYSWZgOp12Oh3nXJ7nxoJSGEciteP9y+fH52q1euv38WosqA6T2gGOT44vry7BEQtJkMAMMpa6JagAMcUfWYa4hkkzAc7fFlSjwqCoOUYAF5RjHZPVCFBOtSBGfgUDji3c3jpibeEMQhIMh8NwshqyRsBJgvF4jMs/YlVR5KhgNpuBLzk0OcUiR3CMhcPaOzsZiAAA/AjmaB3WZIkAAAAASUVORK5CYII=") left top no-repeat;
+  }
+
+  a.dir {
+    background : url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABt0lEQVR42oxStZoWQRCs2cXdHTLcHZ6EjAwnQWIkJyQlRt4Cd3d3d1n5d7q7ju1zv/q+mh6taQsk8fn29kPDRo87SDMQcNAUJgIQkBjdAoRKdXjm2mOH0AqS+PlkP8sfp0h93iu/PDji9s2FzSSJVg5ykZqWgfGRr9rAAAQiDFoB1OfyESZEB7iAI0lHwLREQBcQQKqo8p+gNUCguwCNAAUQAcFOb0NNGjT+BbUC2YsHZpWLhC6/m0chqIoM1LKbQIIBwlTQE1xAo9QDGDPYf6rkTpPc92gCUYVJAZjhyZltJ95f3zuvLYRGWWCUNkDL2333McBh4kaLlxg+aTmyL7c2xTjkN4Bt7oE3DBP/3SRz65R/bkmBRPGzcRNHYuzMjaj+fdnaFoJUEdTSXfaHbe7XNnMPyqryPcmfY+zURaAB7SHk9cXSH4fQ5rojgCAVIuqCNWgRhLYLhJB4k3iZfIPtnQiCpjAzeBIRXMA6emAqoEbQSoDdGxFUrxS1AYcpaNbBgyQBGJEOnYOeENKR/iAd1npusI4C75/c3539+nbUjOgZV5CkAU27df40lH+agUdIuA/EAgDmZnwZlhDc0wAAAABJRU5ErkJggg==") left top no-repeat;
+  }
+
+  a.up {
+    background : url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACM0lEQVR42myTA+w1RxRHz+zftmrbdlTbtq04qRGrCmvbDWp9tq3a7tPcub8mj9XZ3eHOGQdJAHw77/LbZuvnWy+c/CIAd+91CMf3bo+bgcBiBAGIZKXb19/zodsAkFT+3px+ssYfyHTQW5tr05dCOf3xN49KaVX9+2zy1dX4XMk+5JflN5MBPL30oVsvnvEyp+18Nt3ZAErQMSFOfelCFvw0HcUloDayljZkX+MmamTAMTe+d+ltZ+1wEaRAX/MAnkJdcujzZyErIiVSzCEvIiq4O83AG7LAkwsfIgAnbncag82jfPPdd9RQyhPkpNJvKJWQBKlYFmQA315n4YPNjwMAZYy0TgAweedLmLzTJSTLIxkWDaVCVfAbbiKjytgmm+EGpMBYW0WwwbZ7lL8anox/UxekaOW544HO0ANAshxuORT/RG5YSrjlwZ3lM955tlQqbtVMlWIhjwzkAVFB8Q9EAAA3AFJ+DR3DO/Pnd3NPi7H117rAzWjpEs8vfIqsGZpaweOfEAAFJKuM0v6kf2iC5pZ9+fmLSZfWBVaKfLLNOXj6lYY0V2lfyVCIsVzmcRV9Y0fx02eTaEwhl2PDrXcjFdYRAohQmS8QEFLCLKGYA0AeEakhCCFDXqxsE0AQACgAQp5w96o0lAXuNASeDKWIvADiHwigfBINpWKtAXJvCEKWgSJNbRvxf4SmrnKDpvZavePu1K/zu/due1X/6Nj90MBd/J2Cic7WjBp/jUdIuA8AUtd65M+PzXIAAAAASUVORK5CYII=") left top no-repeat;
+  }
+
+  html[dir=rtl] a {
+    background-position-x: right;
+  }
+
+  #parentDirLinkBox {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+  }
+</style>
+
+<title id="title"></title>
+
+</head>
+
+<body>
+
+<h1 id="header">Index of LOCATION</h1>
+
+<div id="parentDirLinkBox" style="display:none">
+  <a id="parentDirLink" class="icon up">
+    <span id="parentDirText">[parent directory]</span>
+  </a>
+</div>
+
+<table>
+  <thead>
+    <tr class="header" id="theader">
+      <th id="nameColumnHeader" tabindex=0 role="button">Name</th>
+      <th id="sizeColumnHeader" class="detailsColumn" tabindex=0 role="button">
+        Size
+      </th>
+      <th id="dateColumnHeader" class="detailsColumn" tabindex=0 role="button">
+        Date Modified
+      </th>
+    </tr>
+  </thead>
+  <tbody id="tbody">
+  </tbody>
+</table>
+
+</body>
+
+</html>
+<script>// Copyright (c) 2012 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+/**
+ * @fileoverview This file defines a singleton which provides access to all data
+ * that is available as soon as the page's resources are loaded (before DOM
+ * content has finished loading). This data includes both localized strings and
+ * any data that is important to have ready from a very early stage (e.g. things
+ * that must be displayed right away).
+ *
+ * Note that loadTimeData is not guaranteed to be consistent between page
+ * refreshes (https://crbug.com/740629) and should not contain values that might
+ * change if the page is re-opened later.
+ */
+
+/** @type {!LoadTimeData} */
+// eslint-disable-next-line no-var
+var loadTimeData;
+
+class LoadTimeData {
+  constructor() {
+    /** @type {?Object} */
+    this.data_ = null;
+  }
+
+  /**
+   * Sets the backing object.
+   *
+   * Note that there is no getter for |data_| to discourage abuse of the form:
+   *
+   *     var value = loadTimeData.data()['key'];
+   *
+   * @param {Object} value The de-serialized page data.
+   */
+  set data(value) {
+    expect(!this.data_, 'Re-setting data.');
+    this.data_ = value;
+  }
+
+  /**
+   * @param {string} id An ID of a value that might exist.
+   * @return {boolean} True if |id| is a key in the dictionary.
+   */
+  valueExists(id) {
+    return id in this.data_;
+  }
+
+  /**
+   * Fetches a value, expecting that it exists.
+   * @param {string} id The key that identifies the desired value.
+   * @return {*} The corresponding value.
+   */
+  getValue(id) {
+    expect(this.data_, 'No data. Did you remember to include strings.js?');
+    const value = this.data_[id];
+    expect(typeof value !== 'undefined', 'Could not find value for ' + id);
+    return value;
+  }
+
+  /**
+   * As above, but also makes sure that the value is a string.
+   * @param {string} id The key that identifies the desired string.
+   * @return {string} The corresponding string value.
+   */
+  getString(id) {
+    const value = this.getValue(id);
+    expectIsType(id, value, 'string');
+    return /** @type {string} */ (value);
+  }
+
+  /**
+   * Returns a formatted localized string where $1 to $9 are replaced by the
+   * second to the tenth argument.
+   * @param {string} id The ID of the string we want.
+   * @param {...(string|number)} var_args The extra values to include in the
+   *     formatted output.
+   * @return {string} The formatted string.
+   */
+  getStringF(id, var_args) {
+    const value = this.getString(id);
+    if (!value) {
+      return '';
+    }
+
+    const args = Array.prototype.slice.call(arguments);
+    args[0] = value;
+    return this.substituteString.apply(this, args);
+  }
+
+  /**
+   * Returns a formatted localized string where $1 to $9 are replaced by the
+   * second to the tenth argument. Any standalone $ signs must be escaped as
+   * $$.
+   * @param {string} label The label to substitute through.
+   *     This is not an resource ID.
+   * @param {...(string|number)} var_args The extra values to include in the
+   *     formatted output.
+   * @return {string} The formatted string.
+   */
+  substituteString(label, var_args) {
+    const varArgs = arguments;
+    return label.replace(/\$(.|$|\n)/g, function(m) {
+      expect(m.match(/\$[$1-9]/), 'Unescaped $ found in localized string.');
+      return m === '$$' ? '$' : varArgs[m[1]];
+    });
+  }
+
+  /**
+   * Returns a formatted string where $1 to $9 are replaced by the second to
+   * tenth argument, split apart into a list of pieces describing how the
+   * substitution was performed. Any standalone $ signs must be escaped as $$.
+   * @param {string} label A localized string to substitute through.
+   *     This is not an resource ID.
+   * @param {...(string|number)} var_args The extra values to include in the
+   *     formatted output.
+   * @return {!Array<!{value: string, arg: (null|string)}>} The formatted
+   *     string pieces.
+   */
+  getSubstitutedStringPieces(label, var_args) {
+    const varArgs = arguments;
+    // Split the string by separately matching all occurrences of $1-9 and of
+    // non $1-9 pieces.
+    const pieces = (label.match(/(\$[1-9])|(([^$]|\$([^1-9]|$))+)/g) ||
+                    []).map(function(p) {
+      // Pieces that are not $1-9 should be returned after replacing $$
+      // with $.
+      if (!p.match(/^\$[1-9]$/)) {
+        expect(
+            (p.match(/\$/g) || []).length % 2 === 0,
+            'Unescaped $ found in localized string.');
+        return {value: p.replace(/\$\$/g, '$'), arg: null};
+      }
+
+      // Otherwise, return the substitution value.
+      return {value: varArgs[p[1]], arg: p};
+    });
+
+    return pieces;
+  }
+
+  /**
+   * As above, but also makes sure that the value is a boolean.
+   * @param {string} id The key that identifies the desired boolean.
+   * @return {boolean} The corresponding boolean value.
+   */
+  getBoolean(id) {
+    const value = this.getValue(id);
+    expectIsType(id, value, 'boolean');
+    return /** @type {boolean} */ (value);
+  }
+
+  /**
+   * As above, but also makes sure that the value is an integer.
+   * @param {string} id The key that identifies the desired number.
+   * @return {number} The corresponding number value.
+   */
+  getInteger(id) {
+    const value = this.getValue(id);
+    expectIsType(id, value, 'number');
+    expect(value === Math.floor(value), 'Number isn\'t integer: ' + value);
+    return /** @type {number} */ (value);
+  }
+
+  /**
+   * Override values in loadTimeData with the values found in |replacements|.
+   * @param {Object} replacements The dictionary object of keys to replace.
+   */
+  overrideValues(replacements) {
+    expect(
+        typeof replacements === 'object',
+        'Replacements must be a dictionary object.');
+    for (const key in replacements) {
+      this.data_[key] = replacements[key];
+    }
+  }
+
+  /**
+   * Reset loadTimeData's data. Should only be used in tests.
+   * @param {?Object} newData The data to restore to, when null restores to
+   *    unset state.
+   */
+  resetForTesting(newData = null) {
+    this.data_ = newData;
+  }
+
+  /**
+   * @return {boolean} Whether loadTimeData.data has been set.
+   */
+  isInitialized() {
+    return this.data_ !== null;
+  }
+}
+
+  /**
+   * Checks condition, throws error message if expectation fails.
+   * @param {*} condition The condition to check for truthiness.
+   * @param {string} message The message to display if the check fails.
+   */
+  function expect(condition, message) {
+    if (!condition) {
+      throw new Error(
+          'Unexpected condition on ' + document.location.href + ': ' + message);
+    }
+  }
+
+  /**
+   * Checks that the given value has the given type.
+   * @param {string} id The id of the value (only used for error message).
+   * @param {*} value The value to check the type on.
+   * @param {string} type The type we expect |value| to be.
+   */
+  function expectIsType(id, value, type) {
+    expect(
+        typeof value === type, '[' + value + '] (' + id + ') is not a ' + type);
+  }
+
+  expect(!loadTimeData, 'should only include this file once');
+  loadTimeData = new LoadTimeData();
+
+  // Expose |loadTimeData| directly on |window|, since within a JS module the
+  // scope is local and not all files have been updated to import the exported
+  // |loadTimeData| explicitly.
+  window.loadTimeData = loadTimeData;
+
+  console.warn('crbug/1173575, non-JS module files deprecated.');</script><script>loadTimeData.data = {"header":"Index of LOCATION","headerDateModified":"Date Modified","headerName":"Name","headerSize":"Size","language":"en","parentDirText":"[parent directory]","textdirection":"ltr"};</script><script>start("C:\\Users\\YMrPro\\Documents\\GitHub\\kyntama.github.io\\");</script>
+<script>onHasParentDirectory();</script>
+<script>addRow(".git",".git",1,0,"0 B",1657502602,"7/11/22, 1:23:22 AM");</script>
+<script>addRow("01 - Asa ANSWER.mp3","01%20-%20Asa%20ANSWER.mp3",0,10877056,"10.4 MB",1657496058,"7/10/22, 11:34:18 PM");</script>
+<script>addRow("01 - Candy Line.mp3","01%20-%20Candy%20Line.mp3",0,9863168,"9.4 MB",1657495962,"7/10/22, 11:32:42 PM");</script>
+<script>addRow("01 - Donten.mp3","01%20-%20Donten.mp3",0,7641216,"7.3 MB",1657495698,"7/10/22, 11:28:18 PM");</script>
+<script>addRow("01 - Drama 01 (2).mp3","01%20-%20Drama%2001%20(2).mp3",0,3213440,"3.1 MB",1657495329,"7/10/22, 11:22:09 PM");</script>
+<script>addRow("01 - Drama 01 (3).mp3","01%20-%20Drama%2001%20(3).mp3",0,1972352,"1.9 MB",1657495186,"7/10/22, 11:19:46 PM");</script>
+<script>addRow("01 - Drama 01.mp3","01%20-%20Drama%2001.mp3",0,4594948,"4.4 MB",1657495433,"7/10/22, 11:23:53 PM");</script>
+<script>addRow("01 - Gin iro no Sora.mp3","01%20-%20Gin%20iro%20no%20Sora.mp3",0,8695936,"8.3 MB",1657495789,"7/10/22, 11:29:49 PM");</script>
+<script>addRow("01 - I, Ai, Ai.mp3","01%20-%20I,%20Ai,%20Ai.mp3",0,9658273,"9.2 MB",1657495927,"7/10/22, 11:32:07 PM");</script>
+<script>addRow("01 - Kanousei Girl.mp3","01%20-%20Kanousei%20Girl.mp3",0,11323905,"10.8 MB",1657496087,"7/10/22, 11:34:47 PM");</script>
+<script>addRow("01 - Kasanaru Kage.mp3","01%20-%20Kasanaru%20Kage.mp3",0,11559791,"11.0 MB",1657496222,"7/10/22, 11:37:02 PM");</script>
+<script>addRow("01 - Kiseki.mp3","01%20-%20Kiseki.mp3",0,12697728,"12.1 MB",1657496614,"7/10/22, 11:43:34 PM");</script>
+<script>addRow("01 - Kono Kotoba Wo Okurimasu.mp3","01%20-%20Kono%20Kotoba%20Wo%20Okurimasu.mp3",0,7173372,"6.8 MB",1657495648,"7/10/22, 11:27:28 PM");</script>
+<script>addRow("01 - LET'S GO OUT.mp3","01%20-%20LET'S%20GO%20OUT.mp3",0,10549376,"10.1 MB",1657496038,"7/10/22, 11:33:58 PM");</script>
+<script>addRow("01 - Moonwalk.mp3","01%20-%20Moonwalk.mp3",0,8503424,"8.1 MB",1657495759,"7/10/22, 11:29:19 PM");</script>
+<script>addRow("01 - Omae no Kaa–chan XX da!.mp3","01%20-%20Omae%20no%20Kaa%E2%80%93chan%20XX%20da!.mp3",0,5244505,"5.0 MB",1657495501,"7/10/22, 11:25:01 PM");</script>
+<script>addRow("01 - Omae no tochan XX.mp3","01%20-%20Omae%20no%20tochan%20XX.mp3",0,5597561,"5.3 MB",1657495540,"7/10/22, 11:25:40 PM");</script>
+<script>addRow("01 - Omae no Tou–chan Chome-Chome.mp3","01%20-%20Omae%20no%20Tou%E2%80%93chan%20Chome-Chome.mp3",0,5722490,"5.5 MB",1657495564,"7/10/22, 11:26:04 PM");</script>
+<script>addRow("01 - Orunaito oedo!.mp3","01%20-%20Orunaito%20oedo!.mp3",0,5358280,"5.1 MB",1657495516,"7/10/22, 11:25:16 PM");</script>
+<script>addRow("01 - Pray.mp3","01%20-%20Pray.mp3",0,10852571,"10.3 MB",1657496056,"7/10/22, 11:34:16 PM");</script>
+<script>addRow("01 - Samurai Heart (Some Like It Hot!!).mp3","01%20-%20Samurai%20Heart%20(Some%20Like%20It%20Hot!!).mp3",0,7661696,"7.3 MB",1657495700,"7/10/22, 11:28:20 PM");</script>
+<script>addRow("01 - sanagi.mp3","01%20-%20sanagi.mp3",0,9842816,"9.4 MB",1657495960,"7/10/22, 11:32:40 PM");</script>
+<script>addRow("01 - Sayonara no Sora.mp3","01%20-%20Sayonara%20no%20Sora.mp3",0,10189670,"9.7 MB",1657496013,"7/10/22, 11:33:33 PM");</script>
+<script>addRow("01 - Shura.mp3","01%20-%20Shura.mp3",0,8003712,"7.6 MB",1657495715,"7/10/22, 11:28:35 PM");</script>
+<script>addRow("01 - SIGNAL.mp3","01%20-%20SIGNAL.mp3",0,9785472,"9.3 MB",1657495948,"7/10/22, 11:32:28 PM");</script>
+<script>addRow("01 - Speed of flow.mp3","01%20-%20Speed%20of%20flow.mp3",0,9207936,"8.8 MB",1657495863,"7/10/22, 11:31:03 PM");</script>
+<script>addRow("01 - Stairway Generation.mp3","01%20-%20Stairway%20Generation.mp3",0,8568960,"8.2 MB",1657495765,"7/10/22, 11:29:25 PM");</script>
+<script>addRow("01 - Temee Raaaa!! Soredemo Gintama Tsuiten no Kaaaa!.mp3","01%20-%20Temee%20Raaaa!!%20Soredemo%20Gintama%20Tsuiten%20no%20Kaaaa!.mp3",0,4591616,"4.4 MB",1657495430,"7/10/22, 11:23:50 PM");</script>
+<script>addRow("01 - Temeera! Hajimeruzee!.mp3","01%20-%20Temeera!%20Hajimeruzee!.mp3",0,346240,"338 kB",1657495156,"7/10/22, 11:19:16 PM");</script>
+<script>addRow("01 - Tooi Nioi.mp3","01%20-%20Tooi%20Nioi.mp3",0,9373824,"8.9 MB",1657495878,"7/10/22, 11:31:18 PM");</script>
+<script>addRow("01 - Wo Ai Ni.mp3","01%20-%20Wo%20Ai%20Ni.mp3",0,9715840,"9.3 MB",1657496553,"7/10/22, 11:42:33 PM");</script>
+<script>addRow("01 - Yuki no Tsubasa.mp3","01%20-%20Yuki%20no%20Tsubasa.mp3",0,9107456,"8.7 MB",1657495845,"7/10/22, 11:30:45 PM");</script>
+<script>addRow("01 Anata MAGIC.mp3","01%20Anata%20MAGIC.mp3",0,9657225,"9.2 MB",1657495923,"7/10/22, 11:32:03 PM");</script>
+<script>addRow("01 Bakuchi Dancer.mp3","01%20Bakuchi%20Dancer.mp3",0,7060482,"6.7 MB",1657495645,"7/10/22, 11:27:25 PM");</script>
+<script>addRow("01 Fuusen Gum.mp3","01%20Fuusen%20Gum.mp3",0,10346381,"9.9 MB",1657496024,"7/10/22, 11:33:44 PM");</script>
+<script>addRow("01 IN MY LIFE.mp3","01%20IN%20MY%20LIFE.mp3",0,9750697,"9.3 MB",1657495941,"7/10/22, 11:32:21 PM");</script>
+<script>addRow("01 Katoniago.mp3","01%20Katoniago.mp3",0,10305028,"9.8 MB",1657496586,"7/10/22, 11:43:06 PM");</script>
+<script>addRow("01 Kaze nogotoku.mp3","01%20Kaze%20nogotoku.mp3",0,9129368,"8.7 MB",1657495850,"7/10/22, 11:30:50 PM");</script>
+<script>addRow("01 Light Infection.mp3","01%20Light%20Infection.mp3",0,9428557,"9.0 MB",1657496568,"7/10/22, 11:42:48 PM");</script>
+<script>addRow("01 Okite ha yaburu tamenikosoaru.mp3","01%20Okite%20ha%20yaburu%20tamenikosoaru.mp3",0,6030428,"5.8 MB",1657495582,"7/10/22, 11:26:22 PM");</script>
+<script>addRow("01 Opuningu.mp3","01%20Opuningu.mp3",0,4928827,"4.7 MB",1657495472,"7/10/22, 11:24:32 PM");</script>
+<script>addRow("01 Sakura Mitsutsuki.mp3","01%20Sakura%20Mitsutsuki.mp3",0,8745298,"8.3 MB",1657495799,"7/10/22, 11:29:59 PM");</script>
+<script>addRow("01 Temee Raaaa!! Soredemo Gintama Tsuiten no Kaaaa!.mp3","01%20Temee%20Raaaa!!%20Soredemo%20Gintama%20Tsuiten%20no%20Kaaaa!.mp3",0,4667654,"4.5 MB",1657495437,"7/10/22, 11:23:57 PM");</script>
+<script>addRow("01 Tougenkyo Alien.mp3","01%20Tougenkyo%20Alien.mp3",0,12289819,"11.7 MB",1657496134,"7/10/22, 11:35:34 PM");</script>
+<script>addRow("01 Wonderful Days.mp3","01%20Wonderful%20Days.mp3",0,9960074,"9.5 MB",1657495983,"7/10/22, 11:33:03 PM");</script>
+<script>addRow("01 Yoiko No Minna Ha Yoku Kiitene.mp3","01%20Yoiko%20No%20Minna%20Ha%20Yoku%20Kiitene.mp3",0,3045076,"2.9 MB",1657495327,"7/10/22, 11:22:07 PM");</script>
+<script>addRow("01 グロリアスデイズ.mp3","01%20%E3%82%B0%E3%83%AD%E3%83%AA%E3%82%A2%E3%82%B9%E3%83%87%E3%82%A4%E3%82%BA.mp3",0,9614509,"9.2 MB",1657495921,"7/10/22, 11:32:01 PM");</script>
+<script>addRow("01 万事屋　金ちゃん 1.mp3","01%20%E4%B8%87%E4%BA%8B%E5%B1%8B%E3%80%80%E9%87%91%E3%81%A1%E3%82%83%E3%82%93%201.mp3",0,2308840,"2.2 MB",1657495237,"7/10/22, 11:20:37 PM");</script>
+<script>addRow("01 恥ずかしながら帰って参りました.mp3","01%20%E6%81%A5%E3%81%99%E3%82%99%E3%81%8B%E3%81%97%E3%81%AA%E3%81%8B%E3%82%99%E3%82%89%E5%B8%B0%E3%81%A3%E3%81%A6%E5%8F%82%E3%82%8A%E3%81%BE%E3%81%97%E3%81%9F.mp3",0,5961728,"5.7 MB",1657495576,"7/10/22, 11:26:16 PM");</script>
+<script>addRow("01. Anata MAGIC.mp3","01.%20Anata%20MAGIC.mp3",0,9816193,"9.4 MB",1657496331,"7/10/22, 11:38:51 PM");</script>
+<script>addRow("01. Beautiful Days.mp3","01.%20Beautiful%20Days.mp3",0,9712897,"9.3 MB",1657495935,"7/10/22, 11:32:15 PM");</script>
+<script>addRow("01. DAY×DAY (2).mp3","01.%20DAY%C3%97DAY%20(2).mp3",0,8892342,"8.5 MB",1657495823,"7/10/22, 11:30:23 PM");</script>
+<script>addRow("01. DAY×DAY.mp3","01.%20DAY%C3%97DAY.mp3",0,8915061,"8.5 MB",1657495830,"7/10/22, 11:30:30 PM");</script>
+<script>addRow("01. DESTINY.mp3","01.%20DESTINY.mp3",0,10014156,"9.6 MB",1657495987,"7/10/22, 11:33:07 PM");</script>
+<script>addRow("01. I Wanna Be....mp3","01.%20I%20Wanna%20Be....mp3",0,9540867,"9.1 MB",1657495902,"7/10/22, 11:31:42 PM");</script>
+<script>addRow("01. Kagayaita.mp3","01.%20Kagayaita.mp3",0,10048567,"9.6 MB",1657495997,"7/10/22, 11:33:17 PM");</script>
+<script>addRow("01. Kintama -Theme Of Host-.mp3","01.%20Kintama%20-Theme%20Of%20Host-.mp3",0,3400434,"3.2 MB",1657495332,"7/10/22, 11:22:12 PM");</script>
+<script>addRow("01. KNOW KNOW KNOW.mp3","01.%20KNOW%20KNOW%20KNOW.mp3",0,8405238,"8.0 MB",1657495745,"7/10/22, 11:29:05 PM");</script>
+<script>addRow("01. MR.RAINDROP.mp3","01.%20MR.RAINDROP.mp3",0,6406144,"6.1 MB",1657495604,"7/10/22, 11:26:44 PM");</script>
+<script>addRow("01. Pray.mp3","01.%20Pray.mp3",0,10802071,"10.3 MB",1657496521,"7/10/22, 11:42:01 PM");</script>
+<script>addRow("01. Pride Kakumei.mp3","01.%20Pride%20Kakumei.mp3",0,9584345,"9.1 MB",1657495915,"7/10/22, 11:31:55 PM");</script>
+<script>addRow("01. Ring a Ding Dong.mp3","01.%20Ring%20a%20Ding%20Dong.mp3",0,8357394,"8.0 MB",1657495740,"7/10/22, 11:29:00 PM");</script>
+<script>addRow("01. SILVER.mp3","01.%20SILVER.mp3",0,8893305,"8.5 MB",1657495826,"7/10/22, 11:30:26 PM");</script>
+<script>addRow("01. This world is yours.mp3","01.%20This%20world%20is%20yours.mp3",0,13151130,"12.5 MB",1657496466,"7/10/22, 11:41:06 PM");</script>
+<script>addRow("01. VS.mp3","01.%20VS.mp3",0,8847147,"8.4 MB",1657495805,"7/10/22, 11:30:05 PM");</script>
+<script>addRow("01. Wonderland.mp3","01.%20Wonderland.mp3",0,9135442,"8.7 MB",1657495853,"7/10/22, 11:30:53 PM");</script>
+<script>addRow("01. あっちむいて.mp3","01.%20%E3%81%82%E3%81%A3%E3%81%A1%E3%82%80%E3%81%84%E3%81%A6.mp3",0,8920820,"8.5 MB",1657495832,"7/10/22, 11:30:32 PM");</script>
+<script>addRow("01. エクスペクト.mp3","01.%20%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%9A%E3%82%AF%E3%83%88.mp3",0,9371097,"8.9 MB",1657495873,"7/10/22, 11:31:13 PM");</script>
+<script>addRow("01. カゲロウ.mp3","01.%20%E3%82%AB%E3%82%B2%E3%83%AD%E3%82%A6.mp3",0,9988386,"9.5 MB",1657496653,"7/10/22, 11:44:13 PM");</script>
+<script>addRow("01. ヒカリ証明論.mp3","01.%20%E3%83%92%E3%82%AB%E3%83%AA%E8%A8%BC%E6%98%8E%E8%AB%96.mp3",0,11307594,"10.8 MB",1657496080,"7/10/22, 11:34:40 PM");</script>
+<script>addRow("01. 勝手にMY SOUL.mp3","01.%20%E5%8B%9D%E6%89%8B%E3%81%ABMY%20SOUL.mp3",0,10641483,"10.1 MB",1657496046,"7/10/22, 11:34:06 PM");</script>
+<script>addRow("01. 反抗声明.mp3","01.%20%E5%8F%8D%E6%8A%97%E5%A3%B0%E6%98%8E.mp3",0,7596772,"7.2 MB",1657495685,"7/10/22, 11:28:05 PM");</script>
+<script>addRow("01. 最後までII.mp3","01.%20%E6%9C%80%E5%BE%8C%E3%81%BE%E3%81%A7II.mp3",0,10518024,"10.0 MB",1657496034,"7/10/22, 11:33:54 PM");</script>
+<script>addRow("01. 桃源郷エイリアン.mp3","01.%20%E6%A1%83%E6%BA%90%E9%83%B7%E3%82%A8%E3%82%A4%E3%83%AA%E3%82%A2%E3%83%B3.mp3",0,12109809,"11.5 MB",1657496397,"7/10/22, 11:39:57 PM");</script>
+<script>addRow("01. 現状ディストラクション.mp3","01.%20%E7%8F%BE%E7%8A%B6%E3%83%87%E3%82%A3%E3%82%B9%E3%83%88%E3%83%A9%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3.mp3",0,8887214,"8.5 MB",1657495817,"7/10/22, 11:30:17 PM");</script>
+<script>addRow("01. 花一匁.mp3","01.%20%E8%8A%B1%E4%B8%80%E5%8C%81.mp3",0,11231682,"10.7 MB",1657496072,"7/10/22, 11:34:32 PM");</script>
+<script>addRow("01.Dilemma.mp3","01.Dilemma.mp3",0,9572354,"9.1 MB",1657496311,"7/10/22, 11:38:31 PM");</script>
+<script>addRow("02 - Adventure Boy.mp3","02%20-%20Adventure%20Boy.mp3",0,6600832,"6.3 MB",1657495626,"7/10/22, 11:27:06 PM");</script>
+<script>addRow("02 - Ai ni Katachi ga Nai no Nara Doushite Kowaretari Suru no.mp3","02%20-%20Ai%20ni%20Katachi%20ga%20Nai%20no%20Nara%20Doushite%20Kowaretari%20Suru%20no.mp3",0,10289173,"9.8 MB",1657496020,"7/10/22, 11:33:40 PM");</script>
+<script>addRow("02 - Coffee Milk.mp3","02%20-%20Coffee%20Milk.mp3",0,10158208,"9.7 MB",1657496007,"7/10/22, 11:33:27 PM");</script>
+<script>addRow("02 - Crazy.mp3","02%20-%20Crazy.mp3",0,8134805,"7.8 MB",1657495733,"7/10/22, 11:28:53 PM");</script>
+<script>addRow("02 - Drama 02 (2).mp3","02%20-%20Drama%2002%20(2).mp3",0,3373184,"3.2 MB",1657495331,"7/10/22, 11:22:11 PM");</script>
+<script>addRow("02 - Drama 02 (3).mp3","02%20-%20Drama%2002%20(3).mp3",0,1527936,"1.5 MB",1657495177,"7/10/22, 11:19:37 PM");</script>
+<script>addRow("02 - Drama 02.mp3","02%20-%20Drama%2002.mp3",0,4971832,"4.7 MB",1657495475,"7/10/22, 11:24:35 PM");</script>
+<script>addRow("02 - Fuusen Gum -Gintama mix-.mp3","02%20-%20Fuusen%20Gum%20-Gintama%20mix-.mp3",0,10018944,"9.6 MB",1657495991,"7/10/22, 11:33:11 PM");</script>
+<script>addRow("02 - Hane.mp3","02%20-%20Hane.mp3",0,7814607,"7.5 MB",1657495710,"7/10/22, 11:28:30 PM");</script>
+<script>addRow("02 - It's alright.mp3","02%20-%20It's%20alright.mp3",0,9601152,"9.2 MB",1657495919,"7/10/22, 11:31:59 PM");</script>
+<script>addRow("02 - Kanjiru Mama.mp3","02%20-%20Kanjiru%20Mama.mp3",0,7327744,"7.0 MB",1657495670,"7/10/22, 11:27:50 PM");</script>
+<script>addRow("02 - Natsuyasumi....mp3","02%20-%20Natsuyasumi....mp3",0,12959872,"12.4 MB",1657496144,"7/10/22, 11:35:44 PM");</script>
+<script>addRow("02 - Omae no tochan XX (Karaoke).mp3","02%20-%20Omae%20no%20tochan%20XX%20(Karaoke).mp3",0,5667570,"5.4 MB",1657495539,"7/10/22, 11:25:39 PM");</script>
+<script>addRow("02 - Omae no Tou–chan Chome-Chome (Instrumental).mp3","02%20-%20Omae%20no%20Tou%E2%80%93chan%20Chome-Chome%20(Instrumental).mp3",0,5652512,"5.4 MB",1657496862,"7/10/22, 11:47:42 PM");</script>
+<script>addRow("02 - Omae no Tou–chan Chome-Chome.mp3","02%20-%20Omae%20no%20Tou%E2%80%93chan%20Chome-Chome.mp3",0,9103324,"8.7 MB",1657495842,"7/10/22, 11:30:42 PM");</script>
+<script>addRow("02 - OMG!!.mp3","02%20-%20OMG!!.mp3",0,9171072,"8.7 MB",1657495857,"7/10/22, 11:30:57 PM");</script>
+<script>addRow("02 - Orunaito oedo!.mp3","02%20-%20Orunaito%20oedo!.mp3",0,2547504,"2.4 MB",1657495278,"7/10/22, 11:21:18 PM");</script>
+<script>addRow("02 - Persona.mp3","02%20-%20Persona.mp3",0,11133056,"10.6 MB",1657496070,"7/10/22, 11:34:30 PM");</script>
+<script>addRow("02 - Please!.mp3","02%20-%20Please!.mp3",0,7886976,"7.5 MB",1657495714,"7/10/22, 11:28:34 PM");</script>
+<script>addRow("02 - Pray (TV version).mp3","02%20-%20Pray%20(TV%20version).mp3",0,3629056,"3.5 MB",1657495339,"7/10/22, 11:22:19 PM");</script>
+<script>addRow("02 - Repeat Man.mp3","02%20-%20Repeat%20Man.mp3",0,8687744,"8.3 MB",1657495788,"7/10/22, 11:29:48 PM");</script>
+<script>addRow("02 - Shuna.mp3","02%20-%20Shuna.mp3",0,9683072,"9.2 MB",1657495933,"7/10/22, 11:32:13 PM");</script>
+<script>addRow("02 - Sorairo.mp3","02%20-%20Sorairo.mp3",0,7594403,"7.2 MB",1657495684,"7/10/22, 11:28:04 PM");</script>
+<script>addRow("02 - Summer Sunset.mp3","02%20-%20Summer%20Sunset.mp3",0,4325504,"4.1 MB",1657495408,"7/10/22, 11:23:28 PM");</script>
+<script>addRow("02 - Tabidachi to Shounen 3 (Studio REC ver.).mp3","02%20-%20Tabidachi%20to%20Shounen%203%20(Studio%20REC%20ver.).mp3",0,11327616,"10.8 MB",1657496417,"7/10/22, 11:40:17 PM");</script>
+<script>addRow("02 - TOKIO Metro ni Notte.mp3","02%20-%20TOKIO%20Metro%20ni%20Notte.mp3",0,10759606,"10.3 MB",1657496050,"7/10/22, 11:34:10 PM");</script>
+<script>addRow("02 - Ttaku yoo, Kyou mo Shigoto Gakonee Janeeka.mp3","02%20-%20Ttaku%20yoo,%20Kyou%20mo%20Shigoto%20Gakonee%20Janeeka.mp3",0,4173952,"4.0 MB",1657495400,"7/10/22, 11:23:20 PM");</script>
+<script>addRow("02 - USER UNKNOWN.mp3","02%20-%20USER%20UNKNOWN.mp3",0,12699776,"12.1 MB",1657496140,"7/10/22, 11:35:40 PM");</script>
+<script>addRow("02 - Utsuro na Ashita.mp3","02%20-%20Utsuro%20na%20Ashita.mp3",0,12863616,"12.3 MB",1657496887,"7/10/22, 11:48:07 PM");</script>
+<script>addRow("02 - Winding Road.mp3","02%20-%20Winding%20Road.mp3",0,10018944,"9.6 MB",1657495989,"7/10/22, 11:33:09 PM");</script>
+<script>addRow("02 - Yamiyo No Mushi Ha Hikari Ni Tsudou-Youtou.Benizakura- .mp3","02%20-%20Yamiyo%20No%20Mushi%20Ha%20Hikari%20Ni%20Tsudou-Youtou.Benizakura-%20.mp3",0,6897756,"6.6 MB",1657495641,"7/10/22, 11:27:21 PM");</script>
+<script>addRow("02 Bokutachi no Kisetsu.mp3","02%20Bokutachi%20no%20Kisetsu.mp3",0,8620515,"8.2 MB",1657495783,"7/10/22, 11:29:43 PM");</script>
+<script>addRow("02 Butterfly.mp3","02%20Butterfly.mp3",0,10906883,"10.4 MB",1657496599,"7/10/22, 11:43:19 PM");</script>
+<script>addRow("02 I, Ai, Ai.mp3","02%20I,%20Ai,%20Ai.mp3",0,9524518,"9.1 MB",1657495896,"7/10/22, 11:31:36 PM");</script>
+<script>addRow("02 LEMON.mp3","02%20LEMON.mp3",0,13154976,"12.5 MB",1657496894,"7/10/22, 11:48:14 PM");</script>
+<script>addRow("02 Lesson 1 Tadashi aisatsu.mp3","02%20Lesson%201%20Tadashi%20aisatsu.mp3",0,8430280,"8.0 MB",1657495748,"7/10/22, 11:29:08 PM");</script>
+<script>addRow("02 Makurakaze.mp3","02%20Makurakaze.mp3",0,9511033,"9.1 MB",1657495894,"7/10/22, 11:31:34 PM");</script>
+<script>addRow("02 Nanimo nonimo soma ranai kuro.mp3","02%20Nanimo%20nonimo%20soma%20ranai%20kuro.mp3",0,5548730,"5.3 MB",1657495532,"7/10/22, 11:25:32 PM");</script>
+<script>addRow("02 Natsu no Kakera.mp3","02%20Natsu%20no%20Kakera.mp3",0,10557460,"10.1 MB",1657496547,"7/10/22, 11:42:27 PM");</script>
+<script>addRow("02 Nora Nekotara wa Shiranai.mp3","02%20Nora%20Nekotara%20wa%20Shiranai.mp3",0,9918278,"9.5 MB",1657496497,"7/10/22, 11:41:37 PM");</script>
+<script>addRow("02 Oni No Seoishi Gou.mp3","02%20Oni%20No%20Seoishi%20Gou.mp3",0,7462881,"7.1 MB",1657495679,"7/10/22, 11:27:59 PM");</script>
+<script>addRow("02 Sekai no kakera.mp3","02%20Sekai%20no%20kakera.mp3",0,8843066,"8.4 MB",1657495803,"7/10/22, 11:30:03 PM");</script>
+<script>addRow("02 STEP BY DAYS.mp3","02%20STEP%20BY%20DAYS.mp3",0,9064946,"8.6 MB",1657495839,"7/10/22, 11:30:39 PM");</script>
+<script>addRow("02 Subtitle da Konoyaroo.mp3","02%20Subtitle%20da%20Konoyaroo.mp3",0,399246,"390 kB",1657495157,"7/10/22, 11:19:17 PM");</script>
+<script>addRow("02 To You....mp3","02%20To%20You....mp3",0,12050626,"11.5 MB",1657496125,"7/10/22, 11:35:25 PM");</script>
+<script>addRow("02 Turning Point.mp3","02%20Turning%20Point.mp3",0,7802800,"7.4 MB",1657495708,"7/10/22, 11:28:28 PM");</script>
+<script>addRow("02 ストレートパーマに悪い奴はいない 1.mp3","02%20%E3%82%B9%E3%83%88%E3%83%AC%E3%83%BC%E3%83%88%E3%83%91%E3%83%BC%E3%83%9E%E3%81%AB%E6%82%AA%E3%81%84%E5%A5%B4%E3%81%AF%E3%81%84%E3%81%AA%E3%81%84%201.mp3",0,2039273,"1.9 MB",1657495188,"7/10/22, 11:19:48 PM");</script>
+<script>addRow("02 何もねぇよ夏.mp3","02%20%E4%BD%95%E3%82%82%E3%81%AD%E3%81%87%E3%82%88%E5%A4%8F.mp3",0,5199756,"5.0 MB",1657495495,"7/10/22, 11:24:55 PM");</script>
+<script>addRow("02. ABOUT U.mp3","02.%20ABOUT%20U.mp3",0,7841875,"7.5 MB",1657495711,"7/10/22, 11:28:31 PM");</script>
+<script>addRow("02. BACK TOGETHER.mp3","02.%20BACK%20TOGETHER.mp3",0,9889792,"9.4 MB",1657495968,"7/10/22, 11:32:48 PM");</script>
+<script>addRow("02. Butterfly.mp3","02.%20Butterfly.mp3",0,15311176,"14.6 MB",1657496662,"7/10/22, 11:44:22 PM");</script>
+<script>addRow("02. DESTINY.mp3","02.%20DESTINY.mp3",0,9928863,"9.5 MB",1657495979,"7/10/22, 11:32:59 PM");</script>
+<script>addRow("02. Elizabeth Hajimete No Otsukai.mp3","02.%20Elizabeth%20Hajimete%20No%20Otsukai.mp3",0,8654193,"8.3 MB",1657495784,"7/10/22, 11:29:44 PM");</script>
+<script>addRow("02. etc.mp3","02.%20etc.mp3",0,7412253,"7.1 MB",1657495677,"7/10/22, 11:27:57 PM");</script>
+<script>addRow("02. HALO.mp3","02.%20HALO.mp3",0,9116720,"8.7 MB",1657495847,"7/10/22, 11:30:47 PM");</script>
+<script>addRow("02. Historia.mp3","02.%20Historia.mp3",0,8527952,"8.1 MB",1657495762,"7/10/22, 11:29:22 PM");</script>
+<script>addRow("02. Hold It, Buster!! ~Battle of Rap~.mp3","02.%20Hold%20It,%20Buster!!%20~Battle%20of%20Rap~.mp3",0,8435445,"8.0 MB",1657495751,"7/10/22, 11:29:11 PM");</script>
+<script>addRow("02. Ito wo Kashi.mp3","02.%20Ito%20wo%20Kashi.mp3",0,11429517,"10.9 MB",1657496104,"7/10/22, 11:35:04 PM");</script>
+<script>addRow("02. Kuroi Ame.mp3","02.%20Kuroi%20Ame.mp3",0,11573073,"11.0 MB",1657496113,"7/10/22, 11:35:13 PM");</script>
+<script>addRow("02. ONE SHOT(EP edition).mp3","02.%20ONE%20SHOT(EP%20edition).mp3",0,9325333,"8.9 MB",1657495869,"7/10/22, 11:31:09 PM");</script>
+<script>addRow("02. Saigo no Bansan.mp3","02.%20Saigo%20no%20Bansan.mp3",0,9469811,"9.0 MB",1657495887,"7/10/22, 11:31:27 PM");</script>
+<script>addRow("02. SUMMER DIVE.mp3","02.%20SUMMER%20DIVE.mp3",0,9055124,"8.6 MB",1657495837,"7/10/22, 11:30:37 PM");</script>
+<script>addRow("02. Tatoeba.mp3","02.%20Tatoeba.mp3",0,9673709,"9.2 MB",1657495929,"7/10/22, 11:32:09 PM");</script>
+<script>addRow("02. サイダー.mp3","02.%20%E3%82%B5%E3%82%A4%E3%83%80%E3%83%BC.mp3",0,11890640,"11.3 MB",1657496715,"7/10/22, 11:45:15 PM");</script>
+<script>addRow("02. サクラミツツキ.mp3","02.%20%E3%82%B5%E3%82%AF%E3%83%A9%E3%83%9F%E3%83%84%E3%83%84%E3%82%AD.mp3",0,8847499,"8.4 MB",1657495806,"7/10/22, 11:30:06 PM");</script>
+<script>addRow("02. サムライハート(Some Like It Hot!!).mp3","02.%20%E3%82%B5%E3%83%A0%E3%83%A9%E3%82%A4%E3%83%8F%E3%83%BC%E3%83%88(Some%20Like%20It%20Hot!!).mp3",0,7585439,"7.2 MB",1657495681,"7/10/22, 11:28:01 PM");</script>
+<script>addRow("02. どういうことなんだい？.mp3","02.%20%E3%81%A9%E3%81%86%E3%81%84%E3%81%86%E3%81%93%E3%81%A8%E3%81%AA%E3%82%93%E3%81%A0%E3%81%84%EF%BC%9F.mp3",0,12164542,"11.6 MB",1657496131,"7/10/22, 11:35:31 PM");</script>
+<script>addRow("02. ひらり舞う.mp3","02.%20%E3%81%B2%E3%82%89%E3%82%8A%E8%88%9E%E3%81%86.mp3",0,11332127,"10.8 MB",1657496090,"7/10/22, 11:34:50 PM");</script>
+<script>addRow("02. ヤバコウキ.mp3","02.%20%E3%83%A4%E3%83%90%E3%82%B3%E3%82%A6%E3%82%AD.mp3",0,5054481,"4.8 MB",1657495485,"7/10/22, 11:24:45 PM");</script>
+<script>addRow("02. ラストソング.mp3","02.%20%E3%83%A9%E3%82%B9%E3%83%88%E3%82%BD%E3%83%B3%E3%82%B0.mp3",0,8074379,"7.7 MB",1657495719,"7/10/22, 11:28:39 PM");</script>
+<script>addRow("02. ラズベリージャム.mp3","02.%20%E3%83%A9%E3%82%BA%E3%83%99%E3%83%AA%E3%83%BC%E3%82%B8%E3%83%A3%E3%83%A0.mp3",0,10503401,"10.0 MB",1657496897,"7/10/22, 11:48:17 PM");</script>
+<script>addRow("02. 刹那.mp3","02.%20%E5%88%B9%E9%82%A3.mp3",0,8615238,"8.2 MB",1657495780,"7/10/22, 11:29:40 PM");</script>
+<script>addRow("02. 夜風とポラリス.mp3","02.%20%E5%A4%9C%E9%A2%A8%E3%81%A8%E3%83%9D%E3%83%A9%E3%83%AA%E3%82%B9.mp3",0,9048967,"8.6 MB",1657496397,"7/10/22, 11:39:57 PM");</script>
+<script>addRow("02. 泣き顔笑顔.mp3","02.%20%E6%B3%A3%E3%81%8D%E9%A1%94%E7%AC%91%E9%A1%94.mp3",0,7408642,"7.1 MB",1657495676,"7/10/22, 11:27:56 PM");</script>
+<script>addRow("02.Town of Night.mp3","02.Town%20of%20Night.mp3",0,9892093,"9.4 MB",1657495970,"7/10/22, 11:32:50 PM");</script>
+<script>addRow("03  Konkai No Eiga Soiu Kanji Nano.mp3","03%20%20Konkai%20No%20Eiga%20Soiu%20Kanji%20Nano.mp3",0,2405599,"2.3 MB",1657495247,"7/10/22, 11:20:47 PM");</script>
+<script>addRow("03 - Anti Violent Sexy.mp3","03%20-%20Anti%20Violent%20Sexy.mp3",0,10240265,"9.8 MB",1657496018,"7/10/22, 11:33:38 PM");</script>
+<script>addRow("03 - Candy Line -instrumental-.mp3","03%20-%20Candy%20Line%20-instrumental-.mp3",0,9785344,"9.3 MB",1657495946,"7/10/22, 11:32:26 PM");</script>
+<script>addRow("03 - Chome Kou Nanza Kuso Kurae!.mp3","03%20-%20Chome%20Kou%20Nanza%20Kuso%20Kurae!.mp3",0,11588089,"11.1 MB",1657496115,"7/10/22, 11:35:15 PM");</script>
+<script>addRow("03 - DAYS.mp3","03%20-%20DAYS.mp3",0,11653248,"11.1 MB",1657496293,"7/10/22, 11:38:13 PM");</script>
+<script>addRow("03 - Drama 03 (2).mp3","03%20-%20Drama%2003%20(2).mp3",0,5415532,"5.2 MB",1657495517,"7/10/22, 11:25:17 PM");</script>
+<script>addRow("03 - Drama 03 (3).mp3","03%20-%20Drama%2003%20(3).mp3",0,2515072,"2.4 MB",1657495271,"7/10/22, 11:21:11 PM");</script>
+<script>addRow("03 - Drama 03.mp3","03%20-%20Drama%2003.mp3",0,5697664,"5.4 MB",1657495559,"7/10/22, 11:25:59 PM");</script>
+<script>addRow("03 - Freeze!.mp3","03%20-%20Freeze!.mp3",0,10334948,"9.9 MB",1657496022,"7/10/22, 11:33:42 PM");</script>
+<script>addRow("03 - Haihai.Yorozuya Desukedo.mp3","03%20-%20Haihai.Yorozuya%20Desukedo.mp3",0,4209456,"4.0 MB",1657495401,"7/10/22, 11:23:21 PM");</script>
+<script>addRow("03 - Haru Haru Haru (acoustic version).mp3","03%20-%20Haru%20Haru%20Haru%20(acoustic%20version).mp3",0,12460160,"11.9 MB",1657496370,"7/10/22, 11:39:30 PM");</script>
+<script>addRow("03 - Horizon.mp3","03%20-%20Horizon.mp3",0,8534238,"8.1 MB",1657495764,"7/10/22, 11:29:24 PM");</script>
+<script>addRow("03 - Kanousei Girl (Instrumental).mp3","03%20-%20Kanousei%20Girl%20(Instrumental).mp3",0,11294309,"10.8 MB",1657496600,"7/10/22, 11:43:20 PM");</script>
+<script>addRow("03 - Kimi no Te.mp3","03%20-%20Kimi%20no%20Te.mp3",0,7544960,"7.2 MB",1657495680,"7/10/22, 11:28:00 PM");</script>
+<script>addRow("03 - LINK IT ALL.mp3","03%20-%20LINK%20IT%20ALL.mp3",0,9441408,"9.0 MB",1657495885,"7/10/22, 11:31:25 PM");</script>
+<script>addRow("03 - MR.RAINDROP.mp3","03%20-%20MR.RAINDROP.mp3",0,6408320,"6.1 MB",1657495605,"7/10/22, 11:26:45 PM");</script>
+<script>addRow("03 - Orunaito oedo!.mp3","03%20-%20Orunaito%20oedo!.mp3",0,9499210,"9.1 MB",1657495892,"7/10/22, 11:31:32 PM");</script>
+<script>addRow("03 - Pray.mp3","03%20-%20Pray.mp3",0,10545280,"10.1 MB",1657496036,"7/10/22, 11:33:56 PM");</script>
+<script>addRow("03 - Rain Drop Street.mp3","03%20-%20Rain%20Drop%20Street.mp3",0,8239232,"7.9 MB",1657495738,"7/10/22, 11:28:58 PM");</script>
+<script>addRow("03 - Renai Hakusho.mp3","03%20-%20Renai%20Hakusho.mp3",0,9289856,"8.9 MB",1657495867,"7/10/22, 11:31:07 PM");</script>
+<script>addRow("03 - Sakura Live Ver..mp3","03%20-%20Sakura%20Live%20Ver..mp3",0,16566978,"15.8 MB",1657496623,"7/10/22, 11:43:43 PM");</script>
+<script>addRow("03 - sanagi -INSTRUMENTAL-.mp3","03%20-%20sanagi%20-INSTRUMENTAL-.mp3",0,9736320,"9.3 MB",1657495939,"7/10/22, 11:32:19 PM");</script>
+<script>addRow("03 - Subtitle da Konoyaroo.mp3","03%20-%20Subtitle%20da%20Konoyaroo.mp3",0,395264,"386 kB",1657495157,"7/10/22, 11:19:17 PM");</script>
+<script>addRow("03 - Tooi Nioi (Indians Version).mp3","03%20-%20Tooi%20Nioi%20(Indians%20Version).mp3",0,10045568,"9.6 MB",1657495995,"7/10/22, 11:33:15 PM");</script>
+<script>addRow("03 - Uso mitai na yoru da Live Ver. ('08.9.8 at Shibuya O-WEST).mp3","03%20-%20Uso%20mitai%20na%20yoru%20da%20Live%20Ver.%20('08.9.8%20at%20Shibuya%20O-WEST).mp3",0,12961244,"12.4 MB",1657496455,"7/10/22, 11:40:55 PM");</script>
+<script>addRow("03 - Vacance desuka Omaera Vacandesuka Omaera.mp3","03%20-%20Vacance%20desuka%20Omaera%20Vacandesuka%20Omaera.mp3",0,4202624,"4.0 MB",1657495401,"7/10/22, 11:23:21 PM");</script>
+<script>addRow("03 - VISION.mp3","03%20-%20VISION.mp3",0,9521280,"9.1 MB",1657496553,"7/10/22, 11:42:33 PM");</script>
+<script>addRow("03 - Wo Ai Ni (Anime Gintama version).mp3","03%20-%20Wo%20Ai%20Ni%20(Anime%20Gintama%20version).mp3",0,3600512,"3.4 MB",1657495338,"7/10/22, 11:22:18 PM");</script>
+<script>addRow("03 - Yell.mp3","03%20-%20Yell.mp3",0,8589146,"8.2 MB",1657495773,"7/10/22, 11:29:33 PM");</script>
+<script>addRow("03 BALLERINA.mp3","03%20BALLERINA.mp3",0,9793923,"9.3 MB",1657495955,"7/10/22, 11:32:35 PM");</script>
+<script>addRow("03 IN MY LIFE -Instrumental-.mp3","03%20IN%20MY%20LIFE%20-Instrumental-.mp3",0,9750870,"9.3 MB",1657496417,"7/10/22, 11:40:17 PM");</script>
+<script>addRow("03 Kagayaita.mp3","03%20Kagayaita.mp3",0,9915302,"9.5 MB",1657495974,"7/10/22, 11:32:54 PM");</script>
+<script>addRow("03 Kage no Nai Otoko (Live at Kyouto Taku Taku 2006.04.17).mp3","03%20Kage%20no%20Nai%20Otoko%20(Live%20at%20Kyouto%20Taku%20Taku%202006.04.17).mp3",0,11463467,"10.9 MB",1657496106,"7/10/22, 11:35:06 PM");</script>
+<script>addRow("03 Lesson 2 Densha no naka de.mp3","03%20Lesson%202%20Densha%20no%20naka%20de.mp3",0,6287194,"6.0 MB",1657495599,"7/10/22, 11:26:39 PM");</script>
+<script>addRow("03 Letter.mp3","03%20Letter.mp3",0,9674817,"9.2 MB",1657495931,"7/10/22, 11:32:11 PM");</script>
+<script>addRow("03 Sakura Mitsutsuki (inst.).mp3","03%20Sakura%20Mitsutsuki%20(inst.).mp3",0,8743239,"8.3 MB",1657495797,"7/10/22, 11:29:57 PM");</script>
+<script>addRow("03 Tougenkyo Alien ( Anime ver.) .mp3","03%20Tougenkyo%20Alien%20(%20Anime%20ver.)%20.mp3",0,3814677,"3.6 MB",1657495352,"7/10/22, 11:22:32 PM");</script>
+<script>addRow("03 Wake no Wakara nai Yatsu ne.mp3","03%20Wake%20no%20Wakara%20nai%20Yatsu%20ne.mp3",0,4767964,"4.5 MB",1657495447,"7/10/22, 11:24:07 PM");</script>
+<script>addRow("03 Watashi to shigoto docchi ga daijinano toka iu onna ni ha jaamansuu purekkusu.mp3","03%20Watashi%20to%20shigoto%20docchi%20ga%20daijinano%20toka%20iu%20onna%20ni%20ha%20jaamansuu%20purekkusu.mp3",0,6678361,"6.4 MB",1657495632,"7/10/22, 11:27:12 PM");</script>
+<script>addRow("03 いや、チクワでいい.mp3","03%20%E3%81%84%E3%82%84%E3%80%81%E3%83%81%E3%82%AF%E3%83%AF%E3%81%A6%E3%82%99%E3%81%84%E3%81%84.mp3",0,5699224,"5.4 MB",1657495565,"7/10/22, 11:26:05 PM");</script>
+<script>addRow("03 主人公の座 1.mp3","03%20%E4%B8%BB%E4%BA%BA%E5%85%AC%E3%81%AE%E5%BA%A7%201.mp3",0,2279055,"2.2 MB",1657495232,"7/10/22, 11:20:32 PM");</script>
+<script>addRow("03. BEAT MONSTER.mp3","03.%20BEAT%20MONSTER.mp3",0,9532446,"9.1 MB",1657495899,"7/10/22, 11:31:39 PM");</script>
+<script>addRow("03. bitter and sweet.mp3","03.%20bitter%20and%20sweet.mp3",0,11111489,"10.6 MB",1657496068,"7/10/22, 11:34:28 PM");</script>
+<script>addRow("03. Cart Niago (LIVE ver.).mp3","03.%20Cart%20Niago%20(LIVE%20ver.).mp3",0,10742499,"10.2 MB",1657496631,"7/10/22, 11:43:51 PM");</script>
+<script>addRow("03. Circle.mp3","03.%20Circle.mp3",0,12965374,"12.4 MB",1657496146,"7/10/22, 11:35:46 PM");</script>
+<script>addRow("03. Donten.mp3","03.%20Donten.mp3",0,7763368,"7.4 MB",1657495706,"7/10/22, 11:28:26 PM");</script>
+<script>addRow("03. Hanyoukyoku No Titlette Igai To Tsukeru No Ga Muzukashii.mp3","03.%20Hanyoukyoku%20No%20Titlette%20Igai%20To%20Tsukeru%20No%20Ga%20Muzukashii.mp3",0,5711814,"5.4 MB",1657495562,"7/10/22, 11:26:02 PM");</script>
+<script>addRow("03. I Wanna Be...(inst.).mp3","03.%20I%20Wanna%20Be...(inst.).mp3",0,9358038,"8.9 MB",1657495871,"7/10/22, 11:31:11 PM");</script>
+<script>addRow("03. KNOW KNOW KNOW (anime ver.).mp3","03.%20KNOW%20KNOW%20KNOW%20(anime%20ver.).mp3",0,3949819,"3.8 MB",1657495374,"7/10/22, 11:22:54 PM");</script>
+<script>addRow("03. Lost my pieces [Melancholic guitar version].mp3","03.%20Lost%20my%20pieces%20%5BMelancholic%20guitar%20version%5D.mp3",0,9246218,"8.8 MB",1657495864,"7/10/22, 11:31:04 PM");</script>
+<script>addRow("03. Pride Kakumei (Inst).mp3","03.%20Pride%20Kakumei%20(Inst).mp3",0,9577061,"9.1 MB",1657495914,"7/10/22, 11:31:54 PM");</script>
+<script>addRow("03. relAte.mp3","03.%20relAte.mp3",0,4284455,"4.1 MB",1657495405,"7/10/22, 11:23:25 PM");</script>
+<script>addRow("03. Shall We Dance.mp3","03.%20Shall%20We%20Dance.mp3",0,8411756,"8.0 MB",1657495746,"7/10/22, 11:29:06 PM");</script>
+<script>addRow("03. THANKS.mp3","03.%20THANKS.mp3",0,7352937,"7.0 MB",1657495673,"7/10/22, 11:27:53 PM");</script>
+<script>addRow("03. からっぽな空の下で.mp3","03.%20%E3%81%8B%E3%82%89%E3%81%A3%E3%81%BD%E3%81%AA%E7%A9%BA%E3%81%AE%E4%B8%8B%E3%81%A7.mp3",0,10994875,"10.5 MB",1657496062,"7/10/22, 11:34:22 PM");</script>
+<script>addRow("03. サムライハート (Some Like It Hot!!).mp3","03.%20%E3%82%B5%E3%83%A0%E3%83%A9%E3%82%A4%E3%83%8F%E3%83%BC%E3%83%88%20(Some%20Like%20It%20Hot!!).mp3",0,7861158,"7.5 MB",1657495712,"7/10/22, 11:28:32 PM");</script>
+<script>addRow("03. シンクロマニカ -Mizuki Masuda Remix-.mp3","03.%20%E3%82%B7%E3%83%B3%E3%82%AF%E3%83%AD%E3%83%9E%E3%83%8B%E3%82%AB%20-Mizuki%20Masuda%20Remix-.mp3",0,14433370,"13.8 MB",1657496157,"7/10/22, 11:35:57 PM");</script>
+<script>addRow("03. バランスドール.mp3","03.%20%E3%83%90%E3%83%A9%E3%83%B3%E3%82%B9%E3%83%89%E3%83%BC%E3%83%AB.mp3",0,10467228,"10.0 MB",1657496028,"7/10/22, 11:33:48 PM");</script>
+<script>addRow("03. ヒカリ証明論 -instrumental-.mp3","03.%20%E3%83%92%E3%82%AB%E3%83%AA%E8%A8%BC%E6%98%8E%E8%AB%96%20-instrumental-.mp3",0,11307654,"10.8 MB",1657496082,"7/10/22, 11:34:42 PM");</script>
+<script>addRow("03. プライド革命.mp3","03.%20%E3%83%97%E3%83%A9%E3%82%A4%E3%83%89%E9%9D%A9%E5%91%BD.mp3",0,9524521,"9.1 MB",1657495897,"7/10/22, 11:31:37 PM");</script>
+<script>addRow("03. らしく.mp3","03.%20%E3%82%89%E3%81%97%E3%81%8F.mp3",0,8115744,"7.7 MB",1657495723,"7/10/22, 11:28:43 PM");</script>
+<script>addRow("03. 反抗声明 (Instrumental).mp3","03.%20%E5%8F%8D%E6%8A%97%E5%A3%B0%E6%98%8E%20(Instrumental).mp3",0,7589488,"7.2 MB",1657495682,"7/10/22, 11:28:02 PM");</script>
+<script>addRow("03. 日本刀(STUDIO LIVE ver.).mp3","03.%20%E6%97%A5%E6%9C%AC%E5%88%80(STUDIO%20LIVE%20ver.).mp3",0,7068371,"6.7 MB",1657495647,"7/10/22, 11:27:27 PM");</script>
+<script>addRow("03. 満月の夜に.mp3","03.%20%E6%BA%80%E6%9C%88%E3%81%AE%E5%A4%9C%E3%81%AB.mp3",0,9434592,"9.0 MB",1657495883,"7/10/22, 11:31:23 PM");</script>
+<script>addRow("03.Mousou Kisei.mp3","03.Mousou%20Kisei.mp3",0,9483834,"9.0 MB",1657495890,"7/10/22, 11:31:30 PM");</script>
+<script>addRow("04 - Drama 04 (2).mp3","04%20-%20Drama%2004%20(2).mp3",0,2441344,"2.3 MB",1657495262,"7/10/22, 11:21:02 PM");</script>
+<script>addRow("04 - Drama 04 (3).mp3","04%20-%20Drama%2004%20(3).mp3",0,766080,"748 kB",1657495163,"7/10/22, 11:19:23 PM");</script>
+<script>addRow("04 - Drama 04.mp3","04%20-%20Drama%2004.mp3",0,4926940,"4.7 MB",1657495471,"7/10/22, 11:24:31 PM");</script>
+<script>addRow("04 - FUNKTOPIA (instrumental) (Studio REC ver.).mp3","04%20-%20FUNKTOPIA%20(instrumental)%20(Studio%20REC%20ver.).mp3",0,4249890,"4.1 MB",1657495404,"7/10/22, 11:23:24 PM");</script>
+<script>addRow("04 - HEART BEAT.mp3","04%20-%20HEART%20BEAT.mp3",0,10197120,"9.7 MB",1657496433,"7/10/22, 11:40:33 PM");</script>
+<script>addRow("04 - Kanjiru Mama -instrumental-.mp3","04%20-%20Kanjiru%20Mama%20-instrumental-.mp3",0,7342208,"7.0 MB",1657495671,"7/10/22, 11:27:51 PM");</script>
+<script>addRow("04 - Kanousei Girl (Gintama Opening ver.).mp3","04%20-%20Kanousei%20Girl%20(Gintama%20Opening%20ver.).mp3",0,3661345,"3.5 MB",1657495341,"7/10/22, 11:22:21 PM");</script>
+<script>addRow("04 - Kasanaru Kage -Instrumental-.mp3","04%20-%20Kasanaru%20Kage%20-Instrumental-.mp3",0,11491873,"11.0 MB",1657496600,"7/10/22, 11:43:20 PM");</script>
+<script>addRow("04 - Mirai he.mp3","04%20-%20Mirai%20he.mp3",0,8505472,"8.1 MB",1657495760,"7/10/22, 11:29:20 PM");</script>
+<script>addRow("04 - Nami Oto.mp3","04%20-%20Nami%20Oto.mp3",0,9193600,"8.8 MB",1657495858,"7/10/22, 11:30:58 PM");</script>
+<script>addRow("04 - Omae no Nii-chan Hikikomori.mp3","04%20-%20Omae%20no%20Nii-chan%20Hikikomori.mp3",0,11224454,"10.7 MB",1657496721,"7/10/22, 11:45:21 PM");</script>
+<script>addRow("04 - Ore Tachi no Shiro Takamagahara.mp3","04%20-%20Ore%20Tachi%20no%20Shiro%20Takamagahara.mp3",0,4237440,"4.0 MB",1657495402,"7/10/22, 11:23:22 PM");</script>
+<script>addRow("04 - Orunaito oedo!.mp3","04%20-%20Orunaito%20oedo!.mp3",0,1278998,"1.2 MB",1657495174,"7/10/22, 11:19:34 PM");</script>
+<script>addRow("04 - Sagashimono Desukai.mp3","04%20-%20Sagashimono%20Desukai.mp3",0,4333692,"4.1 MB",1657495410,"7/10/22, 11:23:30 PM");</script>
+<script>addRow("04 - Sayonara no Sora (TV size).mp3","04%20-%20Sayonara%20no%20Sora%20(TV%20size).mp3",0,3933126,"3.8 MB",1657495372,"7/10/22, 11:22:52 PM");</script>
+<script>addRow("04 - Tooi Nioi.mp3","04%20-%20Tooi%20Nioi.mp3",0,9302144,"8.9 MB",1657496653,"7/10/22, 11:44:13 PM");</script>
+<script>addRow("04 - Toubun Tora ne Tonaa.mp3","04%20-%20Toubun%20Tora%20ne%20Tonaa.mp3",0,3440768,"3.3 MB",1657495335,"7/10/22, 11:22:15 PM");</script>
+<script>addRow("04 Fuusen Gum -Gintama mix-.mp3","04%20Fuusen%20Gum%20-Gintama%20mix-.mp3",0,10045478,"9.6 MB",1657495993,"7/10/22, 11:33:13 PM");</script>
+<script>addRow("04 Kaze nogotoku -Gintama Opening ver.-.mp3","04%20Kaze%20nogotoku%20-Gintama%20Opening%20ver.-.mp3",0,4108634,"3.9 MB",1657495381,"7/10/22, 11:23:01 PM");</script>
+<script>addRow("04 Lesson 3 Petto o kau toki.mp3","04%20Lesson%203%20Petto%20o%20kau%20toki.mp3",0,6101202,"5.8 MB",1657495587,"7/10/22, 11:26:27 PM");</script>
+<script>addRow("04 Natsu yasumi ha hajimaru mae ga ichiban raku shii.mp3","04%20Natsu%20yasumi%20ha%20hajimaru%20mae%20ga%20ichiban%20raku%20shii.mp3",0,6151676,"5.9 MB",1657495589,"7/10/22, 11:26:29 PM");</script>
+<script>addRow("04 Ore mo, Mou Jump Sotsugyou Shi Nakya Ike nee Toshi da yo naa.mp3","04%20Ore%20mo,%20Mou%20Jump%20Sotsugyou%20Shi%20Nakya%20Ike%20nee%20Toshi%20da%20yo%20naa.mp3",0,4289401,"4.1 MB",1657495406,"7/10/22, 11:23:26 PM");</script>
+<script>addRow("04 Stairway Generation.mp3","04%20Stairway%20Generation.mp3",0,8613376,"8.2 MB",1657495778,"7/10/22, 11:29:38 PM");</script>
+<script>addRow("04 Subete Ga Owatta Mirai.mp3","04%20Subete%20Ga%20Owatta%20Mirai.mp3",0,7229877,"6.9 MB",1657495661,"7/10/22, 11:27:41 PM");</script>
+<script>addRow("04 Tougenkyo Alien -Instrumental-.mp3","04%20Tougenkyo%20Alien%20-Instrumental-.mp3",0,12069361,"11.5 MB",1657496128,"7/10/22, 11:35:28 PM");</script>
+<script>addRow("04 Turning Point (inst.).mp3","04%20Turning%20Point%20(inst.).mp3",0,7659649,"7.3 MB",1657495699,"7/10/22, 11:28:19 PM");</script>
+<script>addRow("04 WONDERFUL Xmas.mp3","04%20WONDERFUL%20Xmas.mp3",0,11001938,"10.5 MB",1657496065,"7/10/22, 11:34:25 PM");</script>
+<script>addRow("04 デコボッコ教.mp3","04%20%E3%83%86%E3%82%99%E3%82%B3%E3%83%9B%E3%82%99%E3%83%83%E3%82%B3%E6%95%99.mp3",0,5038080,"4.8 MB",1657495483,"7/10/22, 11:24:43 PM");</script>
+<script>addRow("04 傾城逆転 1.mp3","04%20%E5%82%BE%E5%9F%8E%E9%80%86%E8%BB%A2%201.mp3",0,3436277,"3.3 MB",1657495334,"7/10/22, 11:22:14 PM");</script>
+<script>addRow("04. 0 GAME (80KIDZ Remix).mp3","04.%200%20GAME%20(80KIDZ%20Remix).mp3",0,11007982,"10.5 MB",1657496066,"7/10/22, 11:34:26 PM");</script>
+<script>addRow("04. DAY×DAY (TV Size).mp3","04.%20DAY%C3%97DAY%20(TV%20Size).mp3",0,3822248,"3.6 MB",1657495353,"7/10/22, 11:22:33 PM");</script>
+<script>addRow("04. Historia (Inst).mp3","04.%20Historia%20(Inst).mp3",0,8389010,"8.0 MB",1657495743,"7/10/22, 11:29:03 PM");</script>
+<script>addRow("04. Pray (Original Instrumental).mp3","04.%20Pray%20(Original%20Instrumental).mp3",0,10795802,"10.3 MB",1657496054,"7/10/22, 11:34:14 PM");</script>
+<script>addRow("04. Sa-Ra-Band ~俺たち皿バンド~.mp3","04.%20Sa-Ra-Band%20~%E4%BF%BA%E3%81%9F%E3%81%A1%E7%9A%BF%E3%83%90%E3%83%B3%E3%83%89~.mp3",0,19053573,"18.2 MB",1657496811,"7/10/22, 11:46:51 PM");</script>
+<script>addRow("04. Shougun Kayoooo!.mp3","04.%20Shougun%20Kayoooo!.mp3",0,5674118,"5.4 MB",1657495541,"7/10/22, 11:25:41 PM");</script>
+<script>addRow("04. Shura.mp3","04.%20Shura.mp3",0,8019366,"7.6 MB",1657495717,"7/10/22, 11:28:37 PM");</script>
+<script>addRow("04. STARs.mp3","04.%20STARs.mp3",0,10576736,"10.1 MB",1657496043,"7/10/22, 11:34:03 PM");</script>
+<script>addRow("04. Wonderland (instrumental).mp3","04.%20Wonderland%20(instrumental).mp3",0,9091550,"8.7 MB",1657495840,"7/10/22, 11:30:40 PM");</script>
+<script>addRow("04. カゲロウ ～Instrumental～.mp3","04.%20%E3%82%AB%E3%82%B2%E3%83%AD%E3%82%A6%20%EF%BD%9EInstrumental%EF%BD%9E.mp3",0,9935126,"9.5 MB",1657495980,"7/10/22, 11:33:00 PM");</script>
+<script>addRow("04. サイダー -instrumental-.mp3","04.%20%E3%82%B5%E3%82%A4%E3%83%80%E3%83%BC%20-instrumental-.mp3",0,11816512,"11.3 MB",1657496119,"7/10/22, 11:35:19 PM");</script>
+<script>addRow("04. ジレンマ.mp3","04.%20%E3%82%B8%E3%83%AC%E3%83%B3%E3%83%9E.mp3",0,9480838,"9.0 MB",1657495889,"7/10/22, 11:31:29 PM");</script>
+<script>addRow("04. 最後までII.mp3","04.%20%E6%9C%80%E5%BE%8C%E3%81%BE%E3%81%A7II.mp3",0,10562083,"10.1 MB",1657496040,"7/10/22, 11:34:00 PM");</script>
+<script>addRow("04. 泣き顔笑顔 (Instrumental).mp3","04.%20%E6%B3%A3%E3%81%8D%E9%A1%94%E7%AC%91%E9%A1%94%20(Instrumental).mp3",0,7310452,"7.0 MB",1657495668,"7/10/22, 11:27:48 PM");</script>
+<script>addRow("05 - Candy Line -Gintama Ending Mix-.mp3","05%20-%20Candy%20Line%20-Gintama%20Ending%20Mix-.mp3",0,3676288,"3.5 MB",1657495342,"7/10/22, 11:22:22 PM");</script>
+<script>addRow("05 - Drama 05 (2).mp3","05%20-%20Drama%2005%20(2).mp3",0,3394707,"3.2 MB",1657495332,"7/10/22, 11:22:12 PM");</script>
+<script>addRow("05 - Drama 05 (3).mp3","05%20-%20Drama%2005%20(3).mp3",0,821376,"802 kB",1657495163,"7/10/22, 11:19:23 PM");</script>
+<script>addRow("05 - Drama 05.mp3","05%20-%20Drama%2005.mp3",0,6813448,"6.5 MB",1657495638,"7/10/22, 11:27:18 PM");</script>
+<script>addRow("05 - Housou Kodo Gananbonomonjai.mp3","05%20-%20Housou%20Kodo%20Gananbonomonjai.mp3",0,11347762,"10.8 MB",1657496818,"7/10/22, 11:46:58 PM");</script>
+<script>addRow("05 - Howling Heart.mp3","05%20-%20Howling%20Heart.mp3",0,13582464,"13.0 MB",1657496151,"7/10/22, 11:35:51 PM");</script>
+<script>addRow("05 - Kese nai Data mo aru.mp3","05%20-%20Kese%20nai%20Data%20mo%20aru.mp3",0,4386944,"4.2 MB",1657495416,"7/10/22, 11:23:36 PM");</script>
+<script>addRow("05 - Moonwalk (less vocal).mp3","05%20-%20Moonwalk%20(less%20vocal).mp3",0,8433792,"8.0 MB",1657495751,"7/10/22, 11:29:11 PM");</script>
+<script>addRow("05 - Orunaito oedo!.mp3","05%20-%20Orunaito%20oedo!.mp3",0,1370949,"1.3 MB",1657495176,"7/10/22, 11:19:36 PM");</script>
+<script>addRow("05 - Su Konbu Okawari Yoroshi.mp3","05%20-%20Su%20Konbu%20Okawari%20Yoroshi.mp3",0,4378624,"4.2 MB",1657495415,"7/10/22, 11:23:35 PM");</script>
+<script>addRow("05 - Tsujigiri Ga Deru Kara Abunaiyo.mp3","05%20-%20Tsujigiri%20Ga%20Deru%20Kara%20Abunaiyo.mp3",0,3650916,"3.5 MB",1657495340,"7/10/22, 11:22:20 PM");</script>
+<script>addRow("05 - Yuki no Tsubasa.mp3","05%20-%20Yuki%20no%20Tsubasa.mp3",0,9123968,"8.7 MB",1657495849,"7/10/22, 11:30:49 PM");</script>
+<script>addRow("05 Asa Answer.mp3","05%20Asa%20Answer.mp3",0,10777350,"10.3 MB",1657496052,"7/10/22, 11:34:12 PM");</script>
+<script>addRow("05 Bi ha natsu no kajitsu no gotoki mono.mp3","05%20Bi%20ha%20natsu%20no%20kajitsu%20no%20gotoki%20mono.mp3",0,6337644,"6.0 MB",1657495607,"7/10/22, 11:26:47 PM");</script>
+<script>addRow("05 Kaze nogotoku -instrumental ver.- (KARAOKE).mp3","05%20Kaze%20nogotoku%20-instrumental%20ver.-%20(KARAOKE).mp3",0,9053091,"8.6 MB",1657495835,"7/10/22, 11:30:35 PM");</script>
+<script>addRow("05 Teburumana.mp3","05%20Teburumana.mp3",0,8479390,"8.1 MB",1657495755,"7/10/22, 11:29:15 PM");</script>
+<script>addRow("05 Temeera! Hajimeruzee!!.mp3","05%20Temeera!%20Hajimeruzee!!.mp3",0,302070,"295 kB",1657495154,"7/10/22, 11:19:14 PM");</script>
+<script>addRow("05 To You... -Instrumental-.mp3","05%20To%20You...%20-Instrumental-.mp3",0,12050671,"11.5 MB",1657496451,"7/10/22, 11:40:51 PM");</script>
+<script>addRow("05 Yorozuya Shinpassan & Gurasan.mp3","05%20Yorozuya%20Shinpassan%20&%20Gurasan.mp3",0,10570429,"10.1 MB",1657496042,"7/10/22, 11:34:02 PM");</script>
+<script>addRow("05 愛しさと切なさと男らしさと女らしさと.mp3","05%20%E6%84%9B%E3%81%97%E3%81%95%E3%81%A8%E5%88%87%E3%81%AA%E3%81%95%E3%81%A8%E7%94%B7%E3%82%89%E3%81%97%E3%81%95%E3%81%A8%E5%A5%B3%E3%82%89%E3%81%97%E3%81%95%E3%81%A8.mp3",0,4591616,"4.4 MB",1657495428,"7/10/22, 11:23:48 PM");</script>
+<script>addRow("05 殿中でござる!! 1.mp3","05%20%E6%AE%BF%E4%B8%AD%E3%81%A7%E3%81%94%E3%81%96%E3%82%8B!!%201.mp3",0,2753967,"2.6 MB",1657495300,"7/10/22, 11:21:40 PM");</script>
+<script>addRow("05. 1115.mp3","05.%201115.mp3",0,9910089,"9.5 MB",1657495972,"7/10/22, 11:32:52 PM");</script>
+<script>addRow("05. Beautiful Days.mp3","05.%20Beautiful%20Days.mp3",0,9422113,"9.0 MB",1657495881,"7/10/22, 11:31:21 PM");</script>
+<script>addRow("05. DAY×DAY (Instrumental).mp3","05.%20DAY%C3%97DAY%20(Instrumental).mp3",0,8892103,"8.5 MB",1657495822,"7/10/22, 11:30:22 PM");</script>
+<script>addRow("05. Sonna Koto Itteru Baai Ja Nai Desho.mp3","05.%20Sonna%20Koto%20Itteru%20Baai%20Ja%20Nai%20Desho.mp3",0,4953176,"4.7 MB",1657495473,"7/10/22, 11:24:33 PM");</script>
+<script>addRow("05. アナグラ.mp3","05.%20%E3%82%A2%E3%83%8A%E3%82%B0%E3%83%A9.mp3",0,8894650,"8.5 MB",1657495829,"7/10/22, 11:30:29 PM");</script>
+<script>addRow("05. 現状ディストラクション (Inst).mp3","05.%20%E7%8F%BE%E7%8A%B6%E3%83%87%E3%82%A3%E3%82%B9%E3%83%88%E3%83%A9%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3%20(Inst).mp3",0,8848566,"8.4 MB",1657496887,"7/10/22, 11:48:07 PM");</script>
+<script>addRow("06 - Candy Line.mp3","06%20-%20Candy%20Line.mp3",0,9775232,"9.3 MB",1657496331,"7/10/22, 11:38:51 PM");</script>
+<script>addRow("06 - Dokoka De Kaida Nioi Dane.mp3","06%20-%20Dokoka%20De%20Kaida%20Nioi%20Dane.mp3",0,4329516,"4.1 MB",1657495410,"7/10/22, 11:23:30 PM");</script>
+<script>addRow("06 - Drama 06 (2).mp3","06%20-%20Drama%2006%20(2).mp3",0,3723392,"3.6 MB",1657495345,"7/10/22, 11:22:25 PM");</script>
+<script>addRow("06 - Drama 06 (3).mp3","06%20-%20Drama%2006%20(3).mp3",0,2021504,"1.9 MB",1657495187,"7/10/22, 11:19:47 PM");</script>
+<script>addRow("06 - Drama 06.mp3","06%20-%20Drama%2006.mp3",0,5110684,"4.9 MB",1657495491,"7/10/22, 11:24:51 PM");</script>
+<script>addRow("06 - Omae to X chan non Dakure.mp3","06%20-%20Omae%20to%20X%20chan%20non%20Dakure.mp3",0,10734403,"10.2 MB",1657496047,"7/10/22, 11:34:07 PM");</script>
+<script>addRow("06 - Orunaito oedo!.mp3","06%20-%20Orunaito%20oedo!.mp3",0,6206737,"5.9 MB",1657495595,"7/10/22, 11:26:35 PM");</script>
+<script>addRow("06 - SWELLING.mp3","06%20-%20SWELLING.mp3",0,8790144,"8.4 MB",1657495802,"7/10/22, 11:30:02 PM");</script>
+<script>addRow("06 - Tabemono no Suki Kirai Ooi Nin wa Ningen no Suki Kirai mo Ooi.mp3","06%20-%20Tabemono%20no%20Suki%20Kirai%20Ooi%20Nin%20wa%20Ningen%20no%20Suki%20Kirai%20mo%20Ooi.mp3",0,5859456,"5.6 MB",1657495574,"7/10/22, 11:26:14 PM");</script>
+<script>addRow("06 - Uchuu Senkan Otousei.mp3","06%20-%20Uchuu%20Senkan%20Otousei.mp3",0,5058560,"4.8 MB",1657495486,"7/10/22, 11:24:46 PM");</script>
+<script>addRow("06 Lesson 4 Kyabakura nite.mp3","06%20Lesson%204%20Kyabakura%20nite.mp3",0,5052125,"4.8 MB",1657495484,"7/10/22, 11:24:44 PM");</script>
+<script>addRow("06 Omae mo tou ningyou ni shite yarou ka!.mp3","06%20Omae%20mo%20tou%20ningyou%20ni%20shite%20yarou%20ka!.mp3",0,6908160,"6.6 MB",1657496694,"7/10/22, 11:44:54 PM");</script>
+<script>addRow("06 Shiroi Noroi.mp3","06%20Shiroi%20Noroi.mp3",0,5493236,"5.2 MB",1657495529,"7/10/22, 11:25:29 PM");</script>
+<script>addRow("06 Wo Ai Ni.mp3","06%20Wo%20Ai%20Ni.mp3",0,9657256,"9.2 MB",1657495925,"7/10/22, 11:32:05 PM");</script>
+<script>addRow("06 WONDERFUL Xmas -Instrumental-.mp3","06%20WONDERFUL%20Xmas%20-Instrumental-.mp3",0,10948352,"10.4 MB",1657496060,"7/10/22, 11:34:20 PM");</script>
+<script>addRow("06 Yo no Charm Point.mp3","06%20Yo%20no%20Charm%20Point.mp3",0,3704258,"3.5 MB",1657495344,"7/10/22, 11:22:24 PM");</script>
+<script>addRow("06 あの日の約束 1.mp3","06%20%E3%81%82%E3%81%AE%E6%97%A5%E3%81%AE%E7%B4%84%E6%9D%9F%201.mp3",0,2180836,"2.1 MB",1657495212,"7/10/22, 11:20:12 PM");</script>
+<script>addRow("06 池田夜右衛門.mp3","06%20%E6%B1%A0%E7%94%B0%E5%A4%9C%E5%8F%B3%E8%A1%9B%E9%96%80.mp3",0,4925440,"4.7 MB",1657495470,"7/10/22, 11:24:30 PM");</script>
+<script>addRow("06. BANZAI.mp3","06.%20BANZAI.mp3",0,11291448,"10.8 MB",1657496077,"7/10/22, 11:34:37 PM");</script>
+<script>addRow("06. DAY×DAY (Instrumental／TV Size).mp3","06.%20DAY%C3%97DAY%20(Instrumental%EF%BC%8FTV%20Size).mp3",0,3750177,"3.6 MB",1657495346,"7/10/22, 11:22:26 PM");</script>
+<script>addRow("06. Subete Doudemo Ii Yo.Mou.mp3","06.%20Subete%20Doudemo%20Ii%20Yo.Mou.mp3",0,5985513,"5.7 MB",1657495577,"7/10/22, 11:26:17 PM");</script>
+<script>addRow("06. グロリアスデイズ.mp3","06.%20%E3%82%B0%E3%83%AD%E3%83%AA%E3%82%A2%E3%82%B9%E3%83%87%E3%82%A4%E3%82%BA.mp3",0,9657231,"9.2 MB",1657496466,"7/10/22, 11:41:06 PM");</script>
+<script>addRow("06. サクラミツツキ (Inst).mp3","06.%20%E3%82%B5%E3%82%AF%E3%83%A9%E3%83%9F%E3%83%84%E3%83%84%E3%82%AD%20(Inst).mp3",0,8848558,"8.4 MB",1657495808,"7/10/22, 11:30:08 PM");</script>
+<script>addRow("06. ワンダーランド.mp3","06.%20%E3%83%AF%E3%83%B3%E3%83%80%E3%83%BC%E3%83%A9%E3%83%B3%E3%83%89.mp3",0,9133938,"8.7 MB",1657495852,"7/10/22, 11:30:52 PM");</script>
+<script>addRow("07 - Ameendayo, Omaera!!.mp3","07%20-%20Ameendayo,%20Omaera!!.mp3",0,4784256,"4.6 MB",1657495448,"7/10/22, 11:24:08 PM");</script>
+<script>addRow("07 - Drama 07 (2).mp3","07%20-%20Drama%2007%20(2).mp3",0,2394240,"2.3 MB",1657495245,"7/10/22, 11:20:45 PM");</script>
+<script>addRow("07 - Drama 07 (3).mp3","07%20-%20Drama%2007%20(3).mp3",0,1316992,"1.3 MB",1657495175,"7/10/22, 11:19:35 PM");</script>
+<script>addRow("07 - Drama 07.mp3","07%20-%20Drama%2007.mp3",0,3724252,"3.6 MB",1657495347,"7/10/22, 11:22:27 PM");</script>
+<script>addRow("07 - Dynamite Saikai ~Hirusagari no Sengyoushufu~.mp3","07%20-%20Dynamite%20Saikai%20~Hirusagari%20no%20Sengyoushufu~.mp3",0,6715736,"6.4 MB",1657495633,"7/10/22, 11:27:13 PM");</script>
+<script>addRow("07 - Gin iro no Sora.mp3","07%20-%20Gin%20iro%20no%20Sora.mp3",0,8679552,"8.3 MB",1657495786,"7/10/22, 11:29:46 PM");</script>
+<script>addRow("07 - Orunaito oedo!.mp3","07%20-%20Orunaito%20oedo!.mp3",0,2198508,"2.1 MB",1657495221,"7/10/22, 11:20:21 PM");</script>
+<script>addRow("07 - Sonnanja Sacchan Chigau Nin no Tokoro ni Icchauzo.mp3","07%20-%20Sonnanja%20Sacchan%20Chigau%20Nin%20no%20Tokoro%20ni%20Icchauzo.mp3",0,3438720,"3.3 MB",1657495335,"7/10/22, 11:22:15 PM");</script>
+<script>addRow("07 - Zura Nara Kitto Daijoubu Aru.mp3","07%20-%20Zura%20Nara%20Kitto%20Daijoubu%20Aru.mp3",0,3666576,"3.5 MB",1657495341,"7/10/22, 11:22:21 PM");</script>
+<script>addRow("07 Lesson 5 Kaisha mensetsu nite.mp3","07%20Lesson%205%20Kaisha%20mensetsu%20nite.mp3",0,5986264,"5.7 MB",1657495578,"7/10/22, 11:26:18 PM");</script>
+<script>addRow("07 Light Infection.mp3","07%20Light%20Infection.mp3",0,9384499,"8.9 MB",1657495879,"7/10/22, 11:31:19 PM");</script>
+<script>addRow("07 Tenka No Taizainin.mp3","07%20Tenka%20No%20Taizainin.mp3",0,4415958,"4.2 MB",1657495417,"7/10/22, 11:23:37 PM");</script>
+<script>addRow("07 Yon-nen Me Toka Mou Iinjane.mp3","07%20Yon-nen%20Me%20Toka%20Mou%20Iinjane.mp3",0,6495181,"6.2 MB",1657495611,"7/10/22, 11:26:51 PM");</script>
+<script>addRow("07 Yuurei neta yaru toki ha shinchou ni.mp3","07%20Yuurei%20neta%20yaru%20toki%20ha%20shinchou%20ni.mp3",0,6050295,"5.8 MB",1657495585,"7/10/22, 11:26:25 PM");</script>
+<script>addRow("07 沈まぬ月 1.mp3","07%20%E6%B2%88%E3%81%BE%E3%81%AC%E6%9C%88%201.mp3",0,2634840,"2.5 MB",1657495284,"7/10/22, 11:21:24 PM");</script>
+<script>addRow("07 鬼か人か.mp3","07%20%E9%AC%BC%E3%81%8B%E4%BA%BA%E3%81%8B.mp3",0,4358144,"4.2 MB",1657495413,"7/10/22, 11:23:33 PM");</script>
+<script>addRow("07. KNOW KNOW KNOW.mp3","07.%20KNOW%20KNOW%20KNOW.mp3",0,8199573,"7.8 MB",1657495736,"7/10/22, 11:28:56 PM");</script>
+<script>addRow("07. TREE CLIMBERS.mp3","07.%20TREE%20CLIMBERS.mp3",0,8934172,"8.5 MB",1657495834,"7/10/22, 11:30:34 PM");</script>
+<script>addRow("07. Yoshiwara Tougenkyou No Tsuki.mp3","07.%20Yoshiwara%20Tougenkyou%20No%20Tsuki.mp3",0,6938470,"6.6 MB",1657495643,"7/10/22, 11:27:23 PM");</script>
+<script>addRow("07. サムライハート (Some Like It Hot!!) (Inst).mp3","07.%20%E3%82%B5%E3%83%A0%E3%83%A9%E3%82%A4%E3%83%8F%E3%83%BC%E3%83%88%20(Some%20Like%20It%20Hot!!)%20(Inst).mp3",0,7727425,"7.4 MB",1657495704,"7/10/22, 11:28:24 PM");</script>
+<script>addRow("07. 仲間.mp3","07.%20%E4%BB%B2%E9%96%93.mp3",0,11288508,"10.8 MB",1657496292,"7/10/22, 11:38:12 PM");</script>
+<script>addRow("08 - Chi ni Ueta Kyouken.mp3","08%20-%20Chi%20ni%20Ueta%20Kyouken.mp3",0,4327552,"4.1 MB",1657495409,"7/10/22, 11:23:29 PM");</script>
+<script>addRow("08 - Drama 08 (2).mp3","08%20-%20Drama%2008%20(2).mp3",0,3913856,"3.7 MB",1657495369,"7/10/22, 11:22:49 PM");</script>
+<script>addRow("08 - Drama 08 (3).mp3","08%20-%20Drama%2008%20(3).mp3",0,2289792,"2.2 MB",1657495234,"7/10/22, 11:20:34 PM");</script>
+<script>addRow("08 - Drama 08.mp3","08%20-%20Drama%2008.mp3",0,6604648,"6.3 MB",1657495628,"7/10/22, 11:27:08 PM");</script>
+<script>addRow("08 - Hatujouki Desuka Konoyaroo.mp3","08%20-%20Hatujouki%20Desuka%20Konoyaroo.mp3",0,4751360,"4.5 MB",1657495445,"7/10/22, 11:24:05 PM");</script>
+<script>addRow("08 - Ikimono Tteyori.Bakemon Janeka.mp3","08%20-%20Ikimono%20Tteyori.Bakemon%20Janeka.mp3",0,4672992,"4.5 MB",1657495438,"7/10/22, 11:23:58 PM");</script>
+<script>addRow("08 - Omae no Baa--chan Omae no Basshu Haiteta.mp3","08%20-%20Omae%20no%20Baa--chan%20Omae%20no%20Basshu%20Haiteta.mp3",0,5708454,"5.4 MB",1657495561,"7/10/22, 11:26:01 PM");</script>
+<script>addRow("08 - Orunaito oedo!.mp3","08%20-%20Orunaito%20oedo!.mp3",0,6524386,"6.2 MB",1657495612,"7/10/22, 11:26:52 PM");</script>
+<script>addRow("08 - Shura.mp3","08%20-%20Shura.mp3",0,8024192,"7.7 MB",1657495718,"7/10/22, 11:28:38 PM");</script>
+<script>addRow("08 Ah Yaccattanaa.mp3","08%20Ah%20Yaccattanaa.mp3",0,3448258,"3.3 MB",1657495336,"7/10/22, 11:22:16 PM");</script>
+<script>addRow("08 Goyou Aratame De Aru Kanketsu Hen.mp3","08%20Goyou%20Aratame%20De%20Aru%20Kanketsu%20Hen.mp3",0,5075319,"4.8 MB",1657495488,"7/10/22, 11:24:48 PM");</script>
+<script>addRow("08 Lesson 6 Kuruma ni nottara.mp3","08%20Lesson%206%20Kuruma%20ni%20nottara.mp3",0,5721904,"5.5 MB",1657495563,"7/10/22, 11:26:03 PM");</script>
+<script>addRow("08 Wonderful Days.mp3","08%20Wonderful%20Days.mp3",0,9915326,"9.5 MB",1657495976,"7/10/22, 11:32:56 PM");</script>
+<script>addRow("08 Zutto, zutto isshoni iruyo.mp3","08%20Zutto,%20zutto%20isshoni%20iruyo.mp3",0,7311467,"7.0 MB",1657495669,"7/10/22, 11:27:49 PM");</script>
+<script>addRow("08 国崩しの道具 1.mp3","08%20%E5%9B%BD%E5%B4%A9%E3%81%97%E3%81%AE%E9%81%93%E5%85%B7%201.mp3",0,2984363,"2.8 MB",1657495312,"7/10/22, 11:21:52 PM");</script>
+<script>addRow("08 朝と夜の死神.mp3","08%20%E6%9C%9D%E3%81%A8%E5%A4%9C%E3%81%AE%E6%AD%BB%E7%A5%9E.mp3",0,5162140,"4.9 MB",1657495493,"7/10/22, 11:24:53 PM");</script>
+<script>addRow("08. LET’S GO OUT.mp3","08.%20LET%E2%80%99S%20GO%20OUT.mp3",0,10595760,"10.1 MB",1657496568,"7/10/22, 11:42:48 PM");</script>
+<script>addRow("08. Magic Music.mp3","08.%20Magic%20Music.mp3",0,7609238,"7.3 MB",1657495687,"7/10/22, 11:28:07 PM");</script>
+<script>addRow("08. Yoru No Kumo Ha Engi Ga Warui Singman.mp3","08.%20Yoru%20No%20Kumo%20Ha%20Engi%20Ga%20Warui%20Singman.mp3",0,6587403,"6.3 MB",1657495625,"7/10/22, 11:27:05 PM");</script>
+<script>addRow("08. あっちむいて.mp3","08.%20%E3%81%82%E3%81%A3%E3%81%A1%E3%82%80%E3%81%84%E3%81%A6.mp3",0,8772163,"8.4 MB",1657495800,"7/10/22, 11:30:00 PM");</script>
+<script>addRow("09 - Drama 09 (2).mp3","09%20-%20Drama%2009%20(2).mp3",0,2254976,"2.2 MB",1657495225,"7/10/22, 11:20:25 PM");</script>
+<script>addRow("09 - Drama 09 (3).mp3","09%20-%20Drama%2009%20(3).mp3",0,1360000,"1.3 MB",1657495175,"7/10/22, 11:19:35 PM");</script>
+<script>addRow("09 - Drama 09.mp3","09%20-%20Drama%2009.mp3",0,3943492,"3.8 MB",1657495374,"7/10/22, 11:22:54 PM");</script>
+<script>addRow("09 - Kiseki.mp3","09%20-%20Kiseki.mp3",0,12701824,"12.1 MB",1657496649,"7/10/22, 11:44:09 PM");</script>
+<script>addRow("09 - Kokkara ga Shigoto no Jikan da.mp3","09%20-%20Kokkara%20ga%20Shigoto%20no%20Jikan%20da.mp3",0,3412096,"3.3 MB",1657495333,"7/10/22, 11:22:13 PM");</script>
+<script>addRow("09 - Orunaito oedo!.mp3","09%20-%20Orunaito%20oedo!.mp3",0,2267472,"2.2 MB",1657495229,"7/10/22, 11:20:29 PM");</script>
+<script>addRow("09 - Samurai Ni Hitsuyou Nanoha Ken Nomisane.mp3","09%20-%20Samurai%20Ni%20Hitsuyou%20Nanoha%20Ken%20Nomisane.mp3",0,5163672,"4.9 MB",1657495494,"7/10/22, 11:24:54 PM");</script>
+<script>addRow("09 - Yo no Charm Point.mp3","09%20-%20Yo%20no%20Charm%20Point.mp3",0,3624960,"3.5 MB",1657495339,"7/10/22, 11:22:19 PM");</script>
+<script>addRow("09 3-Nen Z-gumi ginpachisensei hinan kunren.mp3","09%203-Nen%20Z-gumi%20ginpachisensei%20hinan%20kunren.mp3",0,5635178,"5.4 MB",1657495536,"7/10/22, 11:25:36 PM");</script>
+<script>addRow("09 Hobo 100% no kakuritsu de biniiru kasa wo oki wasure tekuru jibun ga kirai.mp3","09%20Hobo%20100%25%20no%20kakuritsu%20de%20biniiru%20kasa%20wo%20oki%20wasure%20tekuru%20jibun%20ga%20kirai.mp3",0,14344771,"13.7 MB",1657496649,"7/10/22, 11:44:09 PM");</script>
+<script>addRow("09 Hoshi Kuzushi.mp3","09%20Hoshi%20Kuzushi.mp3",0,2951002,"2.8 MB",1657495309,"7/10/22, 11:21:49 PM");</script>
+<script>addRow("09 Sayonara no Sora.mp3","09%20Sayonara%20no%20Sora.mp3",0,10147273,"9.7 MB",1657496005,"7/10/22, 11:33:25 PM");</script>
+<script>addRow("09 Toubun Tora ne Tonaa.mp3","09%20Toubun%20Tora%20ne%20Tonaa.mp3",0,3436764,"3.3 MB",1657495334,"7/10/22, 11:22:14 PM");</script>
+<script>addRow("09 この国の処刑人.mp3","09%20%E3%81%93%E3%81%AE%E5%9B%BD%E3%81%AE%E5%87%A6%E5%88%91%E4%BA%BA.mp3",0,6238208,"5.9 MB",1657495598,"7/10/22, 11:26:38 PM");</script>
+<script>addRow("09 歓迎!天堂無心ビームサーベ流 1.mp3","09%20%E6%AD%93%E8%BF%8E!%E5%A4%A9%E5%A0%82%E7%84%A1%E5%BF%83%E3%83%93%E3%83%BC%E3%83%A0%E3%82%B5%E3%83%BC%E3%83%99%E6%B5%81%201.mp3",0,2047105,"2.0 MB",1657495188,"7/10/22, 11:19:48 PM");</script>
+<script>addRow("09. Level 42.mp3","09.%20Level%2042.mp3",0,11421019,"10.9 MB",1657496095,"7/10/22, 11:34:55 PM");</script>
+<script>addRow("09. Shouyou Sensei To No Deai -Gintoki No Kako-.mp3","09.%20Shouyou%20Sensei%20To%20No%20Deai%20-Gintoki%20No%20Kako-.mp3",0,7256147,"6.9 MB",1657495663,"7/10/22, 11:27:43 PM");</script>
+<script>addRow("09. ムーンウォーク.mp3","09.%20%E3%83%A0%E3%83%BC%E3%83%B3%E3%82%A6%E3%82%A9%E3%83%BC%E3%82%AF.mp3",0,8470428,"8.1 MB",1657496729,"7/10/22, 11:45:29 PM");</script>
+<script>addRow("1 Sakurane.mp3","1%20Sakurane.mp3",0,9879772,"9.4 MB",1657495966,"7/10/22, 11:32:46 PM");</script>
+<script>addRow("1 WAVE.mp3","1%20WAVE.mp3",0,10098056,"9.6 MB",1657496003,"7/10/22, 11:33:23 PM");</script>
+<script>addRow("1. Anagura.mp3","1.%20Anagura.mp3",0,8894257,"8.5 MB",1657495827,"7/10/22, 11:30:27 PM");</script>
+<script>addRow("1. Baransudoru.mp3","1.%20Baransudoru.mp3",0,10490248,"10.0 MB",1657496030,"7/10/22, 11:33:50 PM");</script>
+<script>addRow("1. Nakama.mp3","1.%20Nakama.mp3",0,11323798,"10.8 MB",1657496085,"7/10/22, 11:34:45 PM");</script>
+<script>addRow("10 - Ah Kimochi Warii, Futsukayoi da na Korya.mp3","10%20-%20Ah%20Kimochi%20Warii,%20Futsukayoi%20da%20na%20Korya.mp3",0,3921920,"3.7 MB",1657495370,"7/10/22, 11:22:50 PM");</script>
+<script>addRow("10 - Drama 10 (2).mp3","10%20-%20Drama%2010%20(2).mp3",0,1880192,"1.8 MB",1657495182,"7/10/22, 11:19:42 PM");</script>
+<script>addRow("10 - Drama 10 (3).mp3","10%20-%20Drama%2010%20(3).mp3",0,1036164,"1012 kB",1657495169,"7/10/22, 11:19:29 PM");</script>
+<script>addRow("10 - Drama 10.mp3","10%20-%20Drama%2010.mp3",0,11940532,"11.4 MB",1657496122,"7/10/22, 11:35:22 PM");</script>
+<script>addRow("10 - Kasanaru Kage.mp3","10%20-%20Kasanaru%20Kage.mp3",0,11499648,"11.0 MB",1657496110,"7/10/22, 11:35:10 PM");</script>
+<script>addRow("10 - Orea tada Kowasu Dakeda...Kono Kusatta Sekai wo.mp3","10%20-%20Orea%20tada%20Kowasu%20Dakeda...Kono%20Kusatta%20Sekai%20wo.mp3",0,3872896,"3.7 MB",1657495361,"7/10/22, 11:22:41 PM");</script>
+<script>addRow("10 - Orunaito oedo!.mp3","10%20-%20Orunaito%20oedo!.mp3",0,1724125,"1.6 MB",1657495180,"7/10/22, 11:19:40 PM");</script>
+<script>addRow("10 - Zuraaaa!!Doko Arukaaaa.mp3","10%20-%20Zuraaaa!!Doko%20Arukaaaa.mp3",0,3668664,"3.5 MB",1657495342,"7/10/22, 11:22:22 PM");</script>
+<script>addRow("10 4 nenme toka mou iin ja ne.mp3","10%204%20nenme%20toka%20mou%20iin%20ja%20ne.mp3",0,6565410,"6.3 MB",1657495623,"7/10/22, 11:27:03 PM");</script>
+<script>addRow("10 Kaze no Gotoku.mp3","10%20Kaze%20no%20Gotoku.mp3",0,9103428,"8.7 MB",1657495843,"7/10/22, 11:30:43 PM");</script>
+<script>addRow("10 Lesson 7 Koiniochitara.mp3","10%20Lesson%207%20Koiniochitara.mp3",0,4699994,"4.5 MB",1657495443,"7/10/22, 11:24:03 PM");</script>
+<script>addRow("10 Mouichido Mitakattana...Ano San Nin No Egao.mp3","10%20Mouichido%20Mitakattana...Ano%20San%20Nin%20No%20Egao.mp3",0,5311486,"5.1 MB",1657495504,"7/10/22, 11:25:04 PM");</script>
+<script>addRow("10 Ttaku yoo Kyou mo Shigoto Gakonee Janeeka.mp3","10%20Ttaku%20yoo%20Kyou%20mo%20Shigoto%20Gakonee%20Janeeka.mp3",0,4059523,"3.9 MB",1657495377,"7/10/22, 11:22:57 PM");</script>
+<script>addRow("10 おしゃまな普通の男子なのですZ.mp3","10%20%E3%81%8A%E3%81%97%E3%82%83%E3%81%BE%E3%81%AA%E6%99%AE%E9%80%9A%E3%81%AE%E7%94%B7%E5%AD%90%E3%81%AA%E3%81%AE%E3%81%A6%E3%82%99%E3%81%99Z.mp3",0,5240526,"5.0 MB",1657495500,"7/10/22, 11:25:00 PM");</script>
+<script>addRow("10 二人のアニキ 1.mp3","10%20%E4%BA%8C%E4%BA%BA%E3%81%AE%E3%82%A2%E3%83%8B%E3%82%AD%201.mp3",0,2849049,"2.7 MB",1657495314,"7/10/22, 11:21:54 PM");</script>
+<script>addRow("10. Ring a Ding Dong (instrumental).mp3","10.%20Ring%20a%20Ding%20Dong%20(instrumental).mp3",0,8129637,"7.8 MB",1657495730,"7/10/22, 11:28:50 PM");</script>
+<script>addRow("10. Taisetsu Na Ni Hodo Omoku Seoi Gatai.mp3","10.%20Taisetsu%20Na%20Ni%20Hodo%20Omoku%20Seoi%20Gatai.mp3",0,6646958,"6.3 MB",1657495630,"7/10/22, 11:27:10 PM");</script>
+<script>addRow("10. サクラミツツキ.mp3","10.%20%E3%82%B5%E3%82%AF%E3%83%A9%E3%83%9F%E3%83%84%E3%83%84%E3%82%AD.mp3",0,8597905,"8.2 MB",1657495775,"7/10/22, 11:29:35 PM");</script>
+<script>addRow("11 - Dorobou wa Dorobou Demo Koi Dorobou sa!!.mp3","11%20-%20Dorobou%20wa%20Dorobou%20Demo%20Koi%20Dorobou%20sa!!.mp3",0,4440064,"4.2 MB",1657495419,"7/10/22, 11:23:39 PM");</script>
+<script>addRow("11 - Drama 11 (2).mp3","11%20-%20Drama%2011%20(2).mp3",0,2514256,"2.4 MB",1657495268,"7/10/22, 11:21:08 PM");</script>
+<script>addRow("11 - Drama 11 (3).mp3","11%20-%20Drama%2011%20(3).mp3",0,934016,"912 kB",1657495167,"7/10/22, 11:19:27 PM");</script>
+<script>addRow("11 - Drama 11.mp3","11%20-%20Drama%2011.mp3",0,5333120,"5.1 MB",1657495509,"7/10/22, 11:25:09 PM");</script>
+<script>addRow("11 - Orunaito oedo!.mp3","11%20-%20Orunaito%20oedo!.mp3",0,8891080,"8.5 MB",1657495820,"7/10/22, 11:30:20 PM");</script>
+<script>addRow("11 - SIGNAL.mp3","11%20-%20SIGNAL.mp3",0,9826486,"9.4 MB",1657495958,"7/10/22, 11:32:38 PM");</script>
+<script>addRow("11 - Teme Niha Kikoenenoka.Kono Koe.mp3","11%20-%20Teme%20Niha%20Kikoenenoka.Kono%20Koe.mp3",0,3840924,"3.7 MB",1657495360,"7/10/22, 11:22:40 PM");</script>
+<script>addRow("11 - Uchuu Ichi Baka na Samurai da Kono Yaroo!!.mp3","11%20-%20Uchuu%20Ichi%20Baka%20na%20Samurai%20da%20Kono%20Yaroo!!.mp3",0,4145280,"4.0 MB",1657495394,"7/10/22, 11:23:14 PM");</script>
+<script>addRow("11 Endingu.mp3","11%20Endingu.mp3",0,2332255,"2.2 MB",1657495242,"7/10/22, 11:20:42 PM");</script>
+<script>addRow("11 Kiibiki Shimeroyo.mp3","11%20Kiibiki%20Shimeroyo.mp3",0,343866,"336 kB",1657495156,"7/10/22, 11:19:16 PM");</script>
+<script>addRow("11 Mou Nanimo Shinpai Ha Iraneyo.mp3","11%20Mou%20Nanimo%20Shinpai%20Ha%20Iraneyo.mp3",0,2430674,"2.3 MB",1657495257,"7/10/22, 11:20:57 PM");</script>
+<script>addRow("11 Shirouto ha purasu to mainasu dakede juubun da.mp3","11%20Shirouto%20ha%20purasu%20to%20mainasu%20dakede%20juubun%20da.mp3",0,4988699,"4.8 MB",1657495479,"7/10/22, 11:24:39 PM");</script>
+<script>addRow("11 WAVE.mp3","11%20WAVE.mp3",0,9986353,"9.5 MB",1657495984,"7/10/22, 11:33:04 PM");</script>
+<script>addRow("11 まんたま 1.mp3","11%20%E3%81%BE%E3%82%93%E3%81%9F%E3%81%BE%201.mp3",0,2129111,"2.0 MB",1657495206,"7/10/22, 11:20:06 PM");</script>
+<script>addRow("11 光と影の将軍.mp3","11%20%E5%85%89%E3%81%A8%E5%BD%B1%E3%81%AE%E5%B0%86%E8%BB%8D.mp3",0,7184018,"6.9 MB",1657495655,"7/10/22, 11:27:35 PM");</script>
+<script>addRow("11. I am Shock.mp3","11.%20I%20am%20Shock.mp3",0,3861226,"3.7 MB",1657495361,"7/10/22, 11:22:41 PM");</script>
+<script>addRow("11. エクスペクト.mp3","11.%20%E3%82%A8%E3%82%AF%E3%82%B9%E3%83%9A%E3%82%AF%E3%83%88.mp3",0,9253054,"8.8 MB",1657495865,"7/10/22, 11:31:05 PM");</script>
+<script>addRow("12 - Drama 12 (2).mp3","12%20-%20Drama%2012%20(2).mp3",0,1224832,"1.2 MB",1657495173,"7/10/22, 11:19:33 PM");</script>
+<script>addRow("12 - Drama 12.mp3","12%20-%20Drama%2012.mp3",0,2492544,"2.4 MB",1657495265,"7/10/22, 11:21:05 PM");</script>
+<script>addRow("12 - Jibun wo Omotte Kureru Oya ga Ite Hokani Nani ga Iruyo.mp3","12%20-%20Jibun%20wo%20Omotte%20Kureru%20Oya%20ga%20Ite%20Hokani%20Nani%20ga%20Iruyo.mp3",0,8079488,"7.7 MB",1657495721,"7/10/22, 11:28:41 PM");</script>
+<script>addRow("12 - Katana Nanzo Shosen Hitokiri Bouchou Da.mp3","12%20-%20Katana%20Nanzo%20Shosen%20Hitokiri%20Bouchou%20Da.mp3",0,3000504,"2.9 MB",1657495317,"7/10/22, 11:21:57 PM");</script>
+<script>addRow("12 - Kono Stalker Yarou gaaa!.mp3","12%20-%20Kono%20Stalker%20Yarou%20gaaa!.mp3",0,2951296,"2.8 MB",1657495310,"7/10/22, 11:21:50 PM");</script>
+<script>addRow("12 - Orunaito oedo!.mp3","12%20-%20Orunaito%20oedo!.mp3",0,4157692,"4.0 MB",1657495398,"7/10/22, 11:23:18 PM");</script>
+<script>addRow("12 - Speed of flow.mp3","12%20-%20Speed%20of%20flow.mp3",0,9165060,"8.7 MB",1657495855,"7/10/22, 11:30:55 PM");</script>
+<script>addRow("12 Hoshu.mp3","12%20Hoshu.mp3",0,3062639,"2.9 MB",1657495328,"7/10/22, 11:22:08 PM");</script>
+<script>addRow("12 Kanousei Girl.mp3","12%20Kanousei%20Girl.mp3",0,11262187,"10.7 MB",1657496074,"7/10/22, 11:34:34 PM");</script>
+<script>addRow("12 kuraiyagareeeee!!!.mp3","12%20kuraiyagareeeee!!!.mp3",0,5493328,"5.2 MB",1657495525,"7/10/22, 11:25:25 PM");</script>
+<script>addRow("12 Shakitto Senkai.Sassato Shigotoshini Iku Aruyo.mp3","12%20Shakitto%20Senkai.Sassato%20Shigotoshini%20Iku%20Aruyo.mp3",0,5320896,"5.1 MB",1657495506,"7/10/22, 11:25:06 PM");</script>
+<script>addRow("12 Su Konbu Okawari Yoroshi.mp3","12%20Su%20Konbu%20Okawari%20Yoroshi.mp3",0,4337466,"4.1 MB",1657495411,"7/10/22, 11:23:31 PM");</script>
+<script>addRow("12 まんたま karaoke 1.mp3","12%20%E3%81%BE%E3%82%93%E3%81%9F%E3%81%BE%20karaoke%201.mp3",0,2102482,"2.0 MB",1657495198,"7/10/22, 11:19:58 PM");</script>
+<script>addRow("12 忍の務め.mp3","12%20%E5%BF%8D%E3%81%AE%E5%8B%99%E3%82%81.mp3",0,6085826,"5.8 MB",1657495586,"7/10/22, 11:26:26 PM");</script>
+<script>addRow("12. 現状ディストラクション.mp3","12.%20%E7%8F%BE%E7%8A%B6%E3%83%87%E3%82%A3%E3%82%B9%E3%83%88%E3%83%A9%E3%82%AF%E3%82%B7%E3%83%A7%E3%83%B3.mp3",0,8615677,"8.2 MB",1657495781,"7/10/22, 11:29:41 PM");</script>
+<script>addRow("12.Ame Nimo Makezu.mp3","12.Ame%20Nimo%20Makezu.mp3",0,5095242,"4.9 MB",1657495489,"7/10/22, 11:24:49 PM");</script>
+<script>addRow("13 - Cho...Nani Yattennoooo Ano Hitooo.mp3","13%20-%20Cho...Nani%20Yattennoooo%20Ano%20Hitooo.mp3",0,5736828,"5.5 MB",1657495568,"7/10/22, 11:26:08 PM");</script>
+<script>addRow("13 - Donten.mp3","13%20-%20Donten.mp3",0,7626880,"7.3 MB",1657495695,"7/10/22, 11:28:15 PM");</script>
+<script>addRow("13 - Drama 13.mp3","13%20-%20Drama%2013.mp3",0,733312,"716 kB",1657495162,"7/10/22, 11:19:22 PM");</script>
+<script>addRow("13 - Mayonnaise Kitchen.mp3","13%20-%20Mayonnaise%20Kitchen.mp3",0,2586752,"2.5 MB",1657495282,"7/10/22, 11:21:22 PM");</script>
+<script>addRow("13 - Oi, Soko Motto Koe Hareee!.mp3","13%20-%20Oi,%20Soko%20Motto%20Koe%20Hareee!.mp3",0,3768448,"3.6 MB",1657495349,"7/10/22, 11:22:29 PM");</script>
+<script>addRow("13 - Orunaito oedo!.mp3","13%20-%20Orunaito%20oedo!.mp3",0,1225708,"1.2 MB",1657495173,"7/10/22, 11:19:33 PM");</script>
+<script>addRow("13 Hare no Hi ni Amegasa Satsu Yatsu ni Wa Goyojin.mp3","13%20Hare%20no%20Hi%20ni%20Amegasa%20Satsu%20Yatsu%20ni%20Wa%20Goyojin.mp3",0,5311311,"5.1 MB",1657495503,"7/10/22, 11:25:03 PM");</script>
+<script>addRow("13 IN MY LIFE.mp3","13%20IN%20MY%20LIFE.mp3",0,9731398,"9.3 MB",1657495937,"7/10/22, 11:32:17 PM");</script>
+<script>addRow("13 Itsumo kokoro ni ippon no doraibaa.mp3","13%20Itsumo%20kokoro%20ni%20ippon%20no%20doraibaa.mp3",0,6656332,"6.3 MB",1657495631,"7/10/22, 11:27:11 PM");</script>
+<script>addRow("13 Youyaku...Aetana.mp3","13%20Youyaku...Aetana.mp3",0,7393914,"7.1 MB",1657495675,"7/10/22, 11:27:55 PM");</script>
+<script>addRow("13 サブタイトル -夜明け前-.mp3","13%20%E3%82%B5%E3%83%95%E3%82%99%E3%82%BF%E3%82%A4%E3%83%88%E3%83%AB%20-%E5%A4%9C%E6%98%8E%E3%81%91%E5%89%8D-.mp3",0,600064,"586 kB",1657495161,"7/10/22, 11:19:21 PM");</script>
+<script>addRow("13. Ketsunoke Vs Shirinoke.mp3","13.%20Ketsunoke%20Vs%20Shirinoke.mp3",0,5034652,"4.8 MB",1657495482,"7/10/22, 11:24:42 PM");</script>
+<script>addRow("14 - Drama 14.mp3","14%20-%20Drama%2014.mp3",0,2060416,"2.0 MB",1657495189,"7/10/22, 11:19:49 PM");</script>
+<script>addRow("14 - Gohan wa 20 Kai Kan dekara Nomikomi nasai, Wakatta.mp3","14%20-%20Gohan%20wa%2020%20Kai%20Kan%20dekara%20Nomikomi%20nasai,%20Wakatta.mp3",0,325760,"318 kB",1657495155,"7/10/22, 11:19:15 PM");</script>
+<script>addRow("14 - Koko wa Samurai no Kuni da.mp3","14%20-%20Koko%20wa%20Samurai%20no%20Kuni%20da.mp3",0,6357120,"6.1 MB",1657495603,"7/10/22, 11:26:43 PM");</script>
+<script>addRow("14 - Ore Datte Ii Toshi Koite Yancha Nanka Yaritakanekedoyo.mp3","14%20-%20Ore%20Datte%20Ii%20Toshi%20Koite%20Yancha%20Nanka%20Yaritakanekedoyo.mp3",0,9556824,"9.1 MB",1657495912,"7/10/22, 11:31:52 PM");</script>
+<script>addRow("14 - Orunaito oedo!.mp3","14%20-%20Orunaito%20oedo!.mp3",0,3434623,"3.3 MB",1657495334,"7/10/22, 11:22:14 PM");</script>
+<script>addRow("14 - Sanagi.mp3","14%20-%20Sanagi.mp3",0,9787520,"9.3 MB",1657495951,"7/10/22, 11:32:31 PM");</script>
+<script>addRow("14 Chantoo mae rato tsunagattendayo.mp3","14%20Chantoo%20mae%20rato%20tsunagattendayo.mp3",0,7175642,"6.8 MB",1657495650,"7/10/22, 11:27:30 PM");</script>
+<script>addRow("14 Goyou Aratame de Aru!.mp3","14%20Goyou%20Aratame%20de%20Aru!.mp3",0,4857826,"4.6 MB",1657495454,"7/10/22, 11:24:14 PM");</script>
+<script>addRow("14 Katoniago.mp3","14%20Katoniago.mp3",0,10216237,"9.7 MB",1657496497,"7/10/22, 11:41:37 PM");</script>
+<script>addRow("14 Taiketsu Enmi.mp3","14%20Taiketsu%20Enmi.mp3",0,8603899,"8.2 MB",1657495777,"7/10/22, 11:29:37 PM");</script>
+<script>addRow("14 国盗合戦.mp3","14%20%E5%9B%BD%E7%9B%97%E5%90%88%E6%88%A6.mp3",0,6223872,"5.9 MB",1657495593,"7/10/22, 11:26:33 PM");</script>
+<script>addRow("14. Yoru No Kao Ha Onmyouji.mp3","14.%20Yoru%20No%20Kao%20Ha%20Onmyouji.mp3",0,5287519,"5.0 MB",1657495502,"7/10/22, 11:25:02 PM");</script>
+<script>addRow("15 - Ah, Yaccattanaa.mp3","15%20-%20Ah,%20Yaccattanaa.mp3",0,3479680,"3.3 MB",1657495336,"7/10/22, 11:22:16 PM");</script>
+<script>addRow("15 - Hai Kikeeeee!!Omaera!.mp3","15%20-%20Hai%20Kikeeeee!!Omaera!.mp3",0,3786636,"3.6 MB",1657495349,"7/10/22, 11:22:29 PM");</script>
+<script>addRow("15 - Oi Oi, Seishun Desuka.mp3","15%20-%20Oi%20Oi,%20Seishun%20Desuka.mp3",0,5353600,"5.1 MB",1657495515,"7/10/22, 11:25:15 PM");</script>
+<script>addRow("15 - This world is yours.mp3","15%20-%20This%20world%20is%20yours.mp3",0,13117780,"12.5 MB",1657496349,"7/10/22, 11:39:09 PM");</script>
+<script>addRow("15 Koko wa Samurai no Kuni da.mp3","15%20Koko%20wa%20Samurai%20no%20Kuni%20da.mp3",0,6305009,"6.0 MB",1657495601,"7/10/22, 11:26:41 PM");</script>
+<script>addRow("15 Ore Wo Yarennoha Ore Shika Inedaro.mp3","15%20Ore%20Wo%20Yarennoha%20Ore%20Shika%20Inedaro.mp3",0,7239305,"6.9 MB",1657495662,"7/10/22, 11:27:42 PM");</script>
+<script>addRow("15 Sakurane.mp3","15%20Sakurane.mp3",0,9793048,"9.3 MB",1657495953,"7/10/22, 11:32:33 PM");</script>
+<script>addRow("15 Tsuuka , itsumade konna koto yatteru aru ka.mp3","15%20Tsuuka%20,%20itsumade%20konna%20koto%20yatteru%20aru%20ka.mp3",0,3879011,"3.7 MB",1657495367,"7/10/22, 11:22:47 PM");</script>
+<script>addRow("15 血の匂い.mp3","15%20%E8%A1%80%E3%81%AE%E5%8C%82%E3%81%84.mp3",0,4759552,"4.5 MB",1657495446,"7/10/22, 11:24:06 PM");</script>
+<script>addRow("15. Danboru No Kamisama Madao.mp3","15.%20Danboru%20No%20Kamisama%20Madao.mp3",0,8467192,"8.1 MB",1657495752,"7/10/22, 11:29:12 PM");</script>
+<script>addRow("16 - Nuoo! Watashi ga Yaru Aruu!.mp3","16%20-%20Nuoo!%20Watashi%20ga%20Yaru%20Aruu!.mp3",0,4028544,"3.8 MB",1657495376,"7/10/22, 11:22:56 PM");</script>
+<script>addRow("16 - Oyaji no Seichi Snack.mp3","16%20-%20Oyaji%20no%20Seichi%20Snack.mp3",0,3612800,"3.4 MB",1657495338,"7/10/22, 11:22:18 PM");</script>
+<script>addRow("16 - Sonna Amacchoroi Mon Ja Nendayo Oretachi Ha.mp3","16%20-%20Sonna%20Amacchoroi%20Mon%20Ja%20Nendayo%20Oretachi%20Ha.mp3",0,6200364,"5.9 MB",1657495593,"7/10/22, 11:26:33 PM");</script>
+<script>addRow("16 Bakuchi Dancer.mp3","16%20Bakuchi%20Dancer.mp3",0,8728302,"8.3 MB",1657495791,"7/10/22, 11:29:51 PM");</script>
+<script>addRow("16 Hare no nichi ni amagasa sasu yatsu niha goyoujin.mp3","16%20Hare%20no%20nichi%20ni%20amagasa%20sasu%20yatsu%20niha%20goyoujin.mp3",0,5442190,"5.2 MB",1657495519,"7/10/22, 11:25:19 PM");</script>
+<script>addRow("16 Kako Kara Tsuranaru Omoi.mp3","16%20Kako%20Kara%20Tsuranaru%20Omoi.mp3",0,1899856,"1.8 MB",1657495183,"7/10/22, 11:19:43 PM");</script>
+<script>addRow("16 Tabemono no Suki Kirai Ooi Nin wa Ningen no Suki Kirai mo Ooi.mp3","16%20Tabemono%20no%20Suki%20Kirai%20Ooi%20Nin%20wa%20Ningen%20no%20Suki%20Kirai%20mo%20Ooi.mp3",0,5744944,"5.5 MB",1657495569,"7/10/22, 11:26:09 PM");</script>
+<script>addRow("16 忍の里.mp3","16%20%E5%BF%8D%E3%81%AE%E9%87%8C.mp3",0,6006784,"5.7 MB",1657495579,"7/10/22, 11:26:19 PM");</script>
+<script>addRow("16. Haruyasumi Ake Ha Minna Chotto Otona Ni Mieru.mp3","16.%20Haruyasumi%20Ake%20Ha%20Minna%20Chotto%20Otona%20Ni%20Mieru.mp3",0,4834078,"4.6 MB",1657495450,"7/10/22, 11:24:10 PM");</script>
+<script>addRow("17 - Ah! Ore no Jump!!.mp3","17%20-%20Ah!%20Ore%20no%20Jump!!.mp3",0,2963584,"2.8 MB",1657495311,"7/10/22, 11:21:51 PM");</script>
+<script>addRow("17 - Kowashite Yaruyo!!Nanimokamo!!.mp3","17%20-%20Kowashite%20Yaruyo!!Nanimokamo!!.mp3",0,8729976,"8.3 MB",1657495795,"7/10/22, 11:29:55 PM");</script>
+<script>addRow("17 - Touyako ni Ai wo Komete.mp3","17%20-%20Touyako%20ni%20Ai%20wo%20Komete.mp3",0,3858560,"3.7 MB",1657495355,"7/10/22, 11:22:35 PM");</script>
+<script>addRow("17 Bokutachi no Kisetsu.mp3","17%20Bokutachi%20no%20Kisetsu.mp3",0,6965563,"6.6 MB",1657495644,"7/10/22, 11:27:24 PM");</script>
+<script>addRow("17 Touyako ni Ai wo Komete.mp3","17%20Touyako%20ni%20Ai%20wo%20Komete.mp3",0,3897564,"3.7 MB",1657495368,"7/10/22, 11:22:48 PM");</script>
+<script>addRow("17 Yorozuya No Kubi Torerumon Nara Totte Miyagaree.mp3","17%20Yorozuya%20No%20Kubi%20Torerumon%20Nara%20Totte%20Miyagaree.mp3",0,12499347,"11.9 MB",1657496137,"7/10/22, 11:35:37 PM");</script>
+<script>addRow("17 Yoru ou housen.mp3","17%20Yoru%20ou%20housen.mp3",0,5108798,"4.9 MB",1657495490,"7/10/22, 11:24:50 PM");</script>
+<script>addRow("17 アイキャッチ -狼煙-.mp3","17%20%E3%82%A2%E3%82%A4%E3%82%AD%E3%83%A3%E3%83%83%E3%83%81%20-%E7%8B%BC%E7%85%99-.mp3",0,661504,"646 kB",1657495161,"7/10/22, 11:19:21 PM");</script>
+<script>addRow("17. Natsuyasumi Ake Mo Kekkou Otona Ni Mieru.mp3","17.%20Natsuyasumi%20Ake%20Mo%20Kekkou%20Otona%20Ni%20Mieru.mp3",0,5206051,"5.0 MB",1657495496,"7/10/22, 11:24:56 PM");</script>
+<script>addRow("18 - Hisabisa no Shigoto dazee!.mp3","18%20-%20Hisabisa%20no%20Shigoto%20dazee!.mp3",0,3801216,"3.6 MB",1657495350,"7/10/22, 11:22:30 PM");</script>
+<script>addRow("18 - Sesuji Nobashite Iki te Kudake Yotsu!!.mp3","18%20-%20Sesuji%20Nobashite%20Iki%20te%20Kudake%20Yotsu!!.mp3",0,3795072,"3.6 MB",1657495350,"7/10/22, 11:22:30 PM");</script>
+<script>addRow("18 - Unko Ja Nai Toguro Wo Maita Ryuu Da.mp3","18%20-%20Unko%20Ja%20Nai%20Toguro%20Wo%20Maita%20Ryuu%20Da.mp3",0,4679256,"4.5 MB",1657495439,"7/10/22, 11:23:59 PM");</script>
+<script>addRow("18 Kettou mae niha mochiwo tase.mp3","18%20Kettou%20mae%20niha%20mochiwo%20tase.mp3",0,5500663,"5.2 MB",1657495527,"7/10/22, 11:25:27 PM");</script>
+<script>addRow("18 Minna.Okaerinasai.mp3","18%20Minna.Okaerinasai.mp3",0,3887238,"3.7 MB",1657495367,"7/10/22, 11:22:47 PM");</script>
+<script>addRow("18 Natsuyasumi Wa Hajimaru Mae Ga Ichiban Tanoshii.mp3","18%20Natsuyasumi%20Wa%20Hajimaru%20Mae%20Ga%20Ichiban%20Tanoshii.mp3",0,5736585,"5.5 MB",1657495567,"7/10/22, 11:26:07 PM");</script>
+<script>addRow("18 アイキャッチ -対峙-.mp3","18%20%E3%82%A2%E3%82%A4%E3%82%AD%E3%83%A3%E3%83%83%E3%83%81%20-%E5%AF%BE%E5%B3%99-.mp3",0,613709,"599 kB",1657495161,"7/10/22, 11:19:21 PM");</script>
+<script>addRow("18. Anpan Seikatsu  Nichi Me.mp3","18.%20Anpan%20Seikatsu%20%20Nichi%20Me.mp3",0,6773368,"6.5 MB",1657495636,"7/10/22, 11:27:16 PM");</script>
+<script>addRow("19 - Kumikyoku-Zura Ja Nai Katsura Daaa!!-.mp3","19%20-%20Kumikyoku-Zura%20Ja%20Nai%20Katsura%20Daaa!!-.mp3",0,6736980,"6.4 MB",1657495635,"7/10/22, 11:27:15 PM");</script>
+<script>addRow("19 - Mangetsu wa Nin wo Kuruwaseru.mp3","19%20-%20Mangetsu%20wa%20Nin%20wo%20Kuruwaseru.mp3",0,3760256,"3.6 MB",1657495348,"7/10/22, 11:22:28 PM");</script>
+<script>addRow("19 - Mata Sore Kaii!.mp3","19%20-%20Mata%20Sore%20Kaii!.mp3",0,4089984,"3.9 MB",1657495379,"7/10/22, 11:22:59 PM");</script>
+<script>addRow("19 Hiruma ni nomu sake ha hitoaji chigau.mp3","19%20Hiruma%20ni%20nomu%20sake%20ha%20hitoaji%20chigau.mp3",0,5071228,"4.8 MB",1657495487,"7/10/22, 11:24:47 PM");</script>
+<script>addRow("19 Sono Sugata.Masashiku Oni Yo....mp3","19%20Sono%20Sugata.Masashiku%20Oni%20Yo....mp3",0,7288409,"7.0 MB",1657495666,"7/10/22, 11:27:46 PM");</script>
+<script>addRow("19 Watashi to Shigoto Docchi ga Taisetsu Na no Toka Iu Onna ni German Suplex.mp3","19%20Watashi%20to%20Shigoto%20Docchi%20ga%20Taisetsu%20Na%20no%20Toka%20Iu%20Onna%20ni%20German%20Suplex.mp3",0,6487866,"6.2 MB",1657495610,"7/10/22, 11:26:50 PM");</script>
+<script>addRow("19 御庭番衆.mp3","19%20%E5%BE%A1%E5%BA%AD%E7%95%AA%E8%A1%86.mp3",0,4892552,"4.7 MB",1657495463,"7/10/22, 11:24:23 PM");</script>
+<script>addRow("19. Kabuki Chou -Shitennou No Theme-.mp3","19.%20Kabuki%20Chou%20-Shitennou%20No%20Theme-.mp3",0,5851782,"5.6 MB",1657495573,"7/10/22, 11:26:13 PM");</script>
+<script>addRow("2 HERE WE GO!.mp3","2%20HERE%20WE%20GO!.mp3",0,11338371,"10.8 MB",1657496092,"7/10/22, 11:34:52 PM");</script>
+<script>addRow("2 Kotoba Meteor.mp3","2%20Kotoba%20Meteor.mp3",0,7709528,"7.4 MB",1657495702,"7/10/22, 11:28:22 PM");</script>
+<script>addRow("2. Matatabi.mp3","2.%20Matatabi.mp3",0,8380167,"8.0 MB",1657495742,"7/10/22, 11:29:02 PM");</script>
+<script>addRow("2. Sai.mp3","2.%20Sai.mp3",0,8835114,"8.4 MB",1657496349,"7/10/22, 11:39:09 PM");</script>
+<script>addRow("2. Sakura, Sakihokore.mp3","2.%20Sakura,%20Sakihokore.mp3",0,10062654,"9.6 MB",1657496001,"7/10/22, 11:33:21 PM");</script>
+<script>addRow("20 - Fuusen Gamu (TV version).mp3","20%20-%20Fuusen%20Gamu%20(TV%20version).mp3",0,3618944,"3.5 MB",1657495339,"7/10/22, 11:22:19 PM");</script>
+<script>addRow("20 - Iya na Yokan ga Shiyagaruze.mp3","20%20-%20Iya%20na%20Yokan%20ga%20Shiyagaruze.mp3",0,4079744,"3.9 MB",1657495378,"7/10/22, 11:22:58 PM");</script>
+<script>addRow("20 - Kakattekoi Ora!.mp3","20%20-%20Kakattekoi%20Ora!.mp3",0,3942192,"3.8 MB",1657495373,"7/10/22, 11:22:53 PM");</script>
+<script>addRow("20 Anshinshite kutabare, dachi kou.mp3","20%20Anshinshite%20kutabare,%20dachi%20kou.mp3",0,8494301,"8.1 MB",1657495757,"7/10/22, 11:29:17 PM");</script>
+<script>addRow("20 Mukashi no Yuujin ga Kawarazu ni iru Toiu no mo Waruku nai Mono da na....mp3","20%20Mukashi%20no%20Yuujin%20ga%20Kawarazu%20ni%20iru%20Toiu%20no%20mo%20Waruku%20nai%20Mono%20da%20na....mp3",0,6205744,"5.9 MB",1657495591,"7/10/22, 11:26:31 PM");</script>
+<script>addRow("20 Watashi Ga Mitsuketa Taisetsu Na Data Desu.mp3","20%20Watashi%20Ga%20Mitsuketa%20Taisetsu%20Na%20Data%20Desu.mp3",0,2741035,"2.6 MB",1657495298,"7/10/22, 11:21:38 PM");</script>
+<script>addRow("20 ろくでなし二人.mp3","20%20%E3%82%8D%E3%81%8F%E3%81%A6%E3%82%99%E3%81%AA%E3%81%97%E4%BA%8C%E4%BA%BA.mp3",0,6610944,"6.3 MB",1657495634,"7/10/22, 11:27:14 PM");</script>
+<script>addRow("20. Muhou No Machi Ni Tsudou Ha Kyahho Na Yatsu Bakari.mp3","20.%20Muhou%20No%20Machi%20Ni%20Tsudou%20Ha%20Kyahho%20Na%20Yatsu%20Bakari.mp3",0,4989778,"4.8 MB",1657495480,"7/10/22, 11:24:40 PM");</script>
+<script>addRow("21 - Eyecatch Desuzee.mp3","21%20-%20Eyecatch%20Desuzee.mp3",0,356352,"348 kB",1657495156,"7/10/22, 11:19:16 PM");</script>
+<script>addRow("21 - Mata Mendou na Koto ga Okite Yagaru na.mp3","21%20-%20Mata%20Mendou%20na%20Koto%20ga%20Okite%20Yagaru%20na.mp3",0,4685952,"4.5 MB",1657495441,"7/10/22, 11:24:01 PM");</script>
+<script>addRow("21 - Sono Henteko Na Kamigata Misete Waratte Morae!! .mp3","21%20-%20Sono%20Henteko%20Na%20Kamigata%20Misete%20Waratte%20Morae!!%20.mp3",0,4662552,"4.4 MB",1657495436,"7/10/22, 11:23:56 PM");</script>
+<script>addRow("21 Dondake! Gintaman.mp3","21%20Dondake!%20Gintaman.mp3",0,2817341,"2.7 MB",1657495307,"7/10/22, 11:21:47 PM");</script>
+<script>addRow("21 Eyecatch Desuzee!!.mp3","21%20Eyecatch%20Desuzee!!.mp3",0,306250,"299 kB",1657495155,"7/10/22, 11:19:15 PM");</script>
+<script>addRow("21 Temeraaa Soredemo Gintama Tsuitennokaaa Kanketsu Hen.mp3","21%20Temeraaa%20Soredemo%20Gintama%20Tsuitennokaaa%20Kanketsu%20Hen.mp3",0,7350100,"7.0 MB",1657495672,"7/10/22, 11:27:52 PM");</script>
+<script>addRow("21 この目蓋の奥に.mp3","21%20%E3%81%93%E3%81%AE%E7%9B%AE%E8%93%8B%E3%81%AE%E5%A5%A5%E3%81%AB.mp3",0,5385750,"5.1 MB",1657495516,"7/10/22, 11:25:16 PM");</script>
+<script>addRow("21. Hakaba De Abareru No Ha Yuurei Dake De Nai.mp3","21.%20Hakaba%20De%20Abareru%20No%20Ha%20Yuurei%20Dake%20De%20Nai.mp3",0,5838219,"5.6 MB",1657495572,"7/10/22, 11:26:12 PM");</script>
+<script>addRow("22 - Kenkatte no wa yoo Nani ka wo Mamoru Tameni Yarumon Daro ga.mp3","22%20-%20Kenkatte%20no%20wa%20yoo%20Nani%20ka%20wo%20Mamoru%20Tameni%20Yarumon%20Daro%20ga.mp3",0,4374528,"4.2 MB",1657495415,"7/10/22, 11:23:35 PM");</script>
+<script>addRow("22 - Konoyo de Motto mo Taisetsu na Josei wo Kanashimaseru Youna Mane wa Watashi wa Zettai Shi nai!.mp3","22%20-%20Konoyo%20de%20Motto%20mo%20Taisetsu%20na%20Josei%20wo%20Kanashimaseru%20Youna%20Mane%20wa%20Watashi%20wa%20Zettai%20Shi%20nai!.mp3",0,4432000,"4.2 MB",1657495419,"7/10/22, 11:23:39 PM");</script>
+<script>addRow("22 - Shinyaku Uchuu Ichi Baka Na Samurai Da Konoyaro!!.mp3","22%20-%20Shinyaku%20Uchuu%20Ichi%20Baka%20Na%20Samurai%20Da%20Konoyaro!!.mp3",0,4067472,"3.9 MB",1657495378,"7/10/22, 11:22:58 PM");</script>
+<script>addRow("22 Dondake! Konishi man.mp3","22%20Dondake!%20Konishi%20man.mp3",0,2858098,"2.7 MB",1657495307,"7/10/22, 11:21:47 PM");</script>
+<script>addRow("22 Dura Janai Katsura daaa!!.mp3","22%20Dura%20Janai%20Katsura%20daaa!!.mp3",0,3807703,"3.6 MB",1657495351,"7/10/22, 11:22:31 PM");</script>
+<script>addRow("22 Yorozuya Yo Eiennare.mp3","22%20Yorozuya%20Yo%20Eiennare.mp3",0,4239375,"4.0 MB",1657495403,"7/10/22, 11:23:23 PM");</script>
+<script>addRow("22 俺達の仇は.mp3","22%20%E4%BF%BA%E9%81%94%E3%81%AE%E4%BB%87%E3%81%AF.mp3",0,4870144,"4.6 MB",1657495459,"7/10/22, 11:24:19 PM");</script>
+<script>addRow("22. Otoko No Kusari.mp3","22.%20Otoko%20No%20Kusari.mp3",0,6832908,"6.5 MB",1657495640,"7/10/22, 11:27:20 PM");</script>
+<script>addRow("23 - Are Ga.Shiroyasha...!! .mp3","23%20-%20Are%20Ga.Shiroyasha...!!%20.mp3",0,3552780,"3.4 MB",1657495337,"7/10/22, 11:22:17 PM");</script>
+<script>addRow("23 - Dura Janai Katsura daaa!!.mp3","23%20-%20Dura%20Janai%20Katsura%20daaa!!.mp3",0,3922048,"3.7 MB",1657495371,"7/10/22, 11:22:51 PM");</script>
+<script>addRow("23 - Watashi wa Saigo no Ippon ni Natte mo Ore nai ne.mp3","23%20-%20Watashi%20wa%20Saigo%20no%20Ippon%20ni%20Natte%20mo%20Ore%20nai%20ne.mp3",0,4585600,"4.4 MB",1657495427,"7/10/22, 11:23:47 PM");</script>
+<script>addRow("23 Ah Kimochi Warii, Futsukayoi da na Korya.mp3","23%20Ah%20Kimochi%20Warii,%20Futsukayoi%20da%20na%20Korya.mp3",0,3875621,"3.7 MB",1657495366,"7/10/22, 11:22:46 PM");</script>
+<script>addRow("23 Gin San Inakunatta Debut Desuka Konoyaro.mp3","23%20Gin%20San%20Inakunatta%20Debut%20Desuka%20Konoyaro.mp3",0,5330288,"5.1 MB",1657495508,"7/10/22, 11:25:08 PM");</script>
+<script>addRow("23 Otoko ha kokoro ni ko yude tamago.mp3","23%20Otoko%20ha%20kokoro%20ni%20ko%20yude%20tamago.mp3",0,5319911,"5.1 MB",1657495505,"7/10/22, 11:25:05 PM");</script>
+<script>addRow("23 さらばダチ公.mp3","23%20%E3%81%95%E3%82%89%E3%81%AF%E3%82%99%E3%82%BF%E3%82%99%E3%83%81%E5%85%AC.mp3",0,7800832,"7.4 MB",1657495707,"7/10/22, 11:28:27 PM");</script>
+<script>addRow("23. Tetsu No Machi.mp3","23.%20Tetsu%20No%20Machi.mp3",0,4440089,"4.2 MB",1657495420,"7/10/22, 11:23:40 PM");</script>
+<script>addRow("24 - Goyou Aratame de Aru!.mp3","24%20-%20Goyou%20Aratame%20de%20Aru!.mp3",0,5005440,"4.8 MB",1657495481,"7/10/22, 11:24:41 PM");</script>
+<script>addRow("24 - Mezawari Na Hikari Ga Kienee....mp3","24%20-%20Mezawari%20Na%20Hikari%20Ga%20Kienee....mp3",0,5789028,"5.5 MB",1657495571,"7/10/22, 11:26:11 PM");</script>
+<script>addRow("24 - Tetsu wo Tataki Nagaratemee no Tamashii wo Tatakiagero.mp3","24%20-%20Tetsu%20wo%20Tataki%20Nagaratemee%20no%20Tamashii%20wo%20Tatakiagero.mp3",0,6293632,"6.0 MB",1657495603,"7/10/22, 11:26:43 PM");</script>
+<script>addRow("24 Haadoboirudo doushin kozenikata heiji tsugino teema ichi.mp3","24%20Haadoboirudo%20doushin%20kozenikata%20heiji%20tsugino%20teema%20ichi.mp3",0,856183,"836 kB",1657495165,"7/10/22, 11:19:25 PM");</script>
+<script>addRow("24 Okite Wa Yaburu Tame ni Kosoaru.mp3","24%20Okite%20Wa%20Yaburu%20Tame%20ni%20Kosoaru.mp3",0,5732405,"5.5 MB",1657495566,"7/10/22, 11:26:06 PM");</script>
+<script>addRow("24 鎮魂曲.mp3","24%20%E9%8E%AE%E9%AD%82%E6%9B%B2.mp3",0,5537792,"5.3 MB",1657495528,"7/10/22, 11:25:28 PM");</script>
+<script>addRow("24. Ohikaenasutte!.mp3","24.%20Ohikaenasutte!.mp3",0,4982391,"4.8 MB",1657495482,"7/10/22, 11:24:42 PM");</script>
+<script>addRow("25 - Are Koso Benizakura No Kanzen Naru Sugata.Are Koso Kyuukyoku No Tsurugi!.mp3","25%20-%20Are%20Koso%20Benizakura%20No%20Kanzen%20Naru%20Sugata.Are%20Koso%20Kyuukyoku%20No%20Tsurugi!.mp3",0,6050028,"5.8 MB",1657495584,"7/10/22, 11:26:24 PM");</script>
+<script>addRow("25 - Madamada Tsudukuze!.mp3","25%20-%20Madamada%20Tsudukuze!.mp3",0,303232,"296 kB",1657495154,"7/10/22, 11:19:14 PM");</script>
+<script>addRow("25 - Taigi wo Tousu Mae ni Manaa wo Touse Manaa wo.mp3","25%20-%20Taigi%20wo%20Tousu%20Mae%20ni%20Manaa%20wo%20Touse%20Manaa%20wo.mp3",0,5584896,"5.3 MB",1657495534,"7/10/22, 11:25:34 PM");</script>
+<script>addRow("25 Haadoboirudo doushin kozenikata heiji tsugino teema ni.mp3","25%20Haadoboirudo%20doushin%20kozenikata%20heiji%20tsugino%20teema%20ni.mp3",0,857224,"837 kB",1657495165,"7/10/22, 11:19:25 PM");</script>
+<script>addRow("25 Yami yo no Mushi wa Hikari ni Tsudou.mp3","25%20Yami%20yo%20no%20Mushi%20wa%20Hikari%20ni%20Tsudou.mp3",0,4556895,"4.3 MB",1657495426,"7/10/22, 11:23:46 PM");</script>
+<script>addRow("25 真選組の道.mp3","25%20%E7%9C%9F%E9%81%B8%E7%B5%84%E3%81%AE%E9%81%93.mp3",0,4683776,"4.5 MB",1657495440,"7/10/22, 11:24:00 PM");</script>
+<script>addRow("25. Jugemu.mp3","25.%20Jugemu.mp3",0,6409716,"6.1 MB",1657495606,"7/10/22, 11:26:46 PM");</script>
+<script>addRow("26 - Kabuki Machi Blues.mp3","26%20-%20Kabuki%20Machi%20Blues.mp3",0,2779423,"2.7 MB",1657495303,"7/10/22, 11:21:43 PM");</script>
+<script>addRow("26 - Marude Anime no Aku no Soshiki Mitai da na.mp3","26%20-%20Marude%20Anime%20no%20Aku%20no%20Soshiki%20Mitai%20da%20na.mp3",0,4509824,"4.3 MB",1657495423,"7/10/22, 11:23:43 PM");</script>
+<script>addRow("26 - Watashi Ha Ken Igai Nanimo Iranai.mp3","26%20-%20Watashi%20Ha%20Ken%20Igai%20Nanimo%20Iranai.mp3",0,2418996,"2.3 MB",1657495252,"7/10/22, 11:20:52 PM");</script>
+<script>addRow("26 Haadoboirudo doushin kozenikata heiji tsugino teema san.mp3","26%20Haadoboirudo%20doushin%20kozenikata%20heiji%20tsugino%20teema%20san.mp3",0,843643,"824 kB",1657495164,"7/10/22, 11:19:24 PM");</script>
+<script>addRow("26 Madamada Tsudukuze!.mp3","26%20Madamada%20Tsudukuze!.mp3",0,293711,"287 kB",1657495154,"7/10/22, 11:19:14 PM");</script>
+<script>addRow("26 黒縄島の乱戦.mp3","26%20%E9%BB%92%E7%B8%84%E5%B3%B6%E3%81%AE%E4%B9%B1%E6%88%A6.mp3",0,5554176,"5.3 MB",1657495537,"7/10/22, 11:25:37 PM");</script>
+<script>addRow("26. Wataru Seken Ha Ai Bakari.mp3","26.%20Wataru%20Seken%20Ha%20Ai%20Bakari.mp3",0,4425483,"4.2 MB",1657495418,"7/10/22, 11:23:38 PM");</script>
+<script>addRow("27 - Kiibiki Shimeroyo!.mp3","27%20-%20Kiibiki%20Shimeroyo!.mp3",0,319616,"312 kB",1657495155,"7/10/22, 11:19:15 PM");</script>
+<script>addRow("27 - Teme No Iu Yokei Na Mon Ga Doredake No Chikara Wo Motteruka...Shikato Sono Mentama Ni Yakitsukena.mp3","27%20-%20Teme%20No%20Iu%20Yokei%20Na%20Mon%20Ga%20Doredake%20No%20Chikara%20Wo%20Motteruka...Shikato%20Sono%20Mentama%20Ni%20Yakitsukena.mp3",0,2538012,"2.4 MB",1657495276,"7/10/22, 11:21:16 PM");</script>
+<script>addRow("27 - Temee Raa! Butta Kiru!!.mp3","27%20-%20Temee%20Raa!%20Butta%20Kiru!!.mp3",0,5685376,"5.4 MB",1657495553,"7/10/22, 11:25:53 PM");</script>
+<script>addRow("27 Haadoboirudo doushin kozenikata heiji tsugino teema shi.mp3","27%20Haadoboirudo%20doushin%20kozenikata%20heiji%20tsugino%20teema%20shi.mp3",0,849912,"830 kB",1657495164,"7/10/22, 11:19:24 PM");</script>
+<script>addRow("27 Itsumo Kokoro ni Ippon no DRIVER.mp3","27%20Itsumo%20Kokoro%20ni%20Ippon%20no%20DRIVER.mp3",0,6558919,"6.3 MB",1657495617,"7/10/22, 11:26:57 PM");</script>
+<script>addRow("27 剣の記憶.mp3","27%20%E5%89%A3%E3%81%AE%E8%A8%98%E6%86%B6.mp3",0,5264536,"5.0 MB",1657495502,"7/10/22, 11:25:02 PM");</script>
+<script>addRow("27. Theme Of Renhou.mp3","27.%20Theme%20Of%20Renhou.mp3",0,4313659,"4.1 MB",1657495407,"7/10/22, 11:23:27 PM");</script>
+<script>addRow("28 - Kenka wa Guu de Yarubeshi.mp3","28%20-%20Kenka%20wa%20Guu%20de%20Yarubeshi.mp3",0,4976768,"4.7 MB",1657495482,"7/10/22, 11:24:42 PM");</script>
+<script>addRow("28 - Nani Shiten no Kono Nin Tachi.mp3","28%20-%20Nani%20Shiten%20no%20Kono%20Nin%20Tachi.mp3",0,4034688,"3.8 MB",1657495376,"7/10/22, 11:22:56 PM");</script>
+<script>addRow("28 - Shinyaku Tetsu Wo Tataki Nagara Teme No Tamashii Wo Tatakiagero.mp3","28%20-%20Shinyaku%20Tetsu%20Wo%20Tataki%20Nagara%20Teme%20No%20Tamashii%20Wo%20Tatakiagero.mp3",0,6275532,"6.0 MB",1657495597,"7/10/22, 11:26:37 PM");</script>
+<script>addRow("28 Haadoboirudo doushin kozenikata heiji tsugino teema go.mp3","28%20Haadoboirudo%20doushin%20kozenikata%20heiji%20tsugino%20teema%20go.mp3",0,930367,"909 kB",1657495167,"7/10/22, 11:19:27 PM");</script>
+<script>addRow("28 Kenka wa Guu de Yarubeshi.mp3","28%20Kenka%20wa%20Guu%20de%20Yarubeshi.mp3",0,4964405,"4.7 MB",1657495474,"7/10/22, 11:24:34 PM");</script>
+<script>addRow("28 最後のアドレス.mp3","28%20%E6%9C%80%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%88%E3%82%99%E3%83%AC%E3%82%B9.mp3",0,6230016,"5.9 MB",1657495595,"7/10/22, 11:26:35 PM");</script>
+<script>addRow("28. Senryou Bako To Garakuta No Hako.mp3","28.%20Senryou%20Bako%20To%20Garakuta%20No%20Hako.mp3",0,4440125,"4.2 MB",1657495421,"7/10/22, 11:23:41 PM");</script>
+<script>addRow("29 - Atama wo Busou Suru Hitsuyou ga aru.mp3","29%20-%20Atama%20wo%20Busou%20Suru%20Hitsuyou%20ga%20aru.mp3",0,4128896,"3.9 MB",1657495390,"7/10/22, 11:23:10 PM");</script>
+<script>addRow("29 - Doukou ga Hirai Tenzo.mp3","29%20-%20Doukou%20ga%20Hirai%20Tenzo.mp3",0,4620416,"4.4 MB",1657495434,"7/10/22, 11:23:54 PM");</script>
+<script>addRow("29 - Itsukara Chigatta...Oretachi No Michi Ha.mp3","29%20-%20Itsukara%20Chigatta...Oretachi%20No%20Michi%20Ha.mp3",0,6569940,"6.3 MB",1657495629,"7/10/22, 11:27:09 PM");</script>
+<script>addRow("29 Kettou Mae ni Wa You Wo Tasu.mp3","29%20Kettou%20Mae%20ni%20Wa%20You%20Wo%20Tasu.mp3",0,5398038,"5.1 MB",1657495517,"7/10/22, 11:25:17 PM");</script>
+<script>addRow("29 流れ作業でテイクオフ.mp3","29%20%E6%B5%81%E3%82%8C%E4%BD%9C%E6%A5%AD%E3%81%A6%E3%82%99%E3%83%86%E3%82%A4%E3%82%AF%E3%82%AA%E3%83%95.mp3",0,4363846,"4.2 MB",1657495414,"7/10/22, 11:23:34 PM");</script>
+<script>addRow("29. Yuke!Kaien.mp3","29.%20Yuke!Kaien.mp3",0,3964671,"3.8 MB",1657495375,"7/10/22, 11:22:55 PM");</script>
+<script>addRow("3 Last chime.mp3","3%20Last%20chime.mp3",0,10465975,"10.0 MB",1657496379,"7/10/22, 11:39:39 PM");</script>
+<script>addRow("3 Stand By Me.mp3","3%20Stand%20By%20Me.mp3",0,14509694,"13.8 MB",1657496235,"7/10/22, 11:37:15 PM");</script>
+<script>addRow("3. Final Tour Akasaka BLITZ NUDE + TOUR LIVE 2011.07.09.mp3","3.%20Final%20Tour%20Akasaka%20BLITZ%20NUDE%20+%20TOUR%20LIVE%202011.07.09.mp3",0,46889034,"44.7 MB",1657496581,"7/10/22, 11:43:01 PM");</script>
+<script>addRow("3. Light Infection'(Live@Prague-Stream Vol.4 2011.04.10).mp3","3.%20Light%20Infection'(Live@Prague-Stream%20Vol.4%202011.04.10).mp3",0,9600026,"9.2 MB",1657495917,"7/10/22, 11:31:57 PM");</script>
+<script>addRow("3. Nakama [Inst].mp3","3.%20Nakama%20%5BInst%5D.mp3",0,11323653,"10.8 MB",1657496247,"7/10/22, 11:37:27 PM");</script>
+<script>addRow("30 - Itta Hazu Da...Orea Tada Kowasu Dake Da...Kono Kusatta Sekai Wo.mp3","30%20-%20Itta%20Hazu%20Da...Orea%20Tada%20Kowasu%20Dake%20Da...Kono%20Kusatta%20Sekai%20Wo.mp3",0,1959636,"1.9 MB",1657495185,"7/10/22, 11:19:45 PM");</script>
+<script>addRow("30 - Mukashi no Yuujin ga Kawarazu ni iru Toiu no mo Waruku nai Mono da na....mp3","30%20-%20Mukashi%20no%20Yuujin%20ga%20Kawarazu%20ni%20iru%20Toiu%20no%20mo%20Waruku%20nai%20Mono%20da%20na....mp3",0,6451328,"6.2 MB",1657495613,"7/10/22, 11:26:53 PM");</script>
+<script>addRow("30 - Tamashii ni Kizan da Kioku wa Nani ga Attemo Kie nee.mp3","30%20-%20Tamashii%20ni%20Kizan%20da%20Kioku%20wa%20Nani%20ga%20Attemo%20Kie%20nee.mp3",0,4530304,"4.3 MB",1657495425,"7/10/22, 11:23:45 PM");</script>
+<script>addRow("30 Omae Mo Tou Ningyo ni Shite Yarouka!.mp3","30%20Omae%20Mo%20Tou%20Ningyo%20ni%20Shite%20Yarouka!.mp3",0,6788797,"6.5 MB",1657495637,"7/10/22, 11:27:17 PM");</script>
+<script>addRow("30. Ibara Gaki To Bara Gaki.mp3","30.%20Ibara%20Gaki%20To%20Bara%20Gaki.mp3",0,5450524,"5.2 MB",1657495522,"7/10/22, 11:25:22 PM");</script>
+<script>addRow("31 - Banji Ya Gin Chan to wa Ore Tachi no Koto da!.mp3","31%20-%20Banji%20Ya%20Gin%20Chan%20to%20wa%20Ore%20Tachi%20no%20Koto%20da!.mp3",0,3760128,"3.6 MB",1657495347,"7/10/22, 11:22:27 PM");</script>
+<script>addRow("31 - Jinsei wa Belt Conveyor no Youni Nagareru.mp3","31%20-%20Jinsei%20wa%20Belt%20Conveyor%20no%20Youni%20Nagareru.mp3",0,5337216,"5.1 MB",1657495511,"7/10/22, 11:25:11 PM");</script>
+<script>addRow("31 - Yorozuya Ginchan Ga Otoorideeeee!!.mp3","31%20-%20Yorozuya%20Ginchan%20Ga%20Otoorideeeee!!.mp3",0,8186052,"7.8 MB",1657495735,"7/10/22, 11:28:55 PM");</script>
+<script>addRow("31 Uchuu Ichi Baka na Samurai da Kono Yaroo!!.mp3","31%20Uchuu%20Ichi%20Baka%20na%20Samurai%20da%20Kono%20Yaroo!!.mp3",0,4100274,"3.9 MB",1657495380,"7/10/22, 11:23:00 PM");</script>
+<script>addRow("31. Mimawari Gumi -Isaburou No Theme-.mp3","31.%20Mimawari%20Gumi%20-Isaburou%20No%20Theme-.mp3",0,6016878,"5.7 MB",1657495580,"7/10/22, 11:26:20 PM");</script>
+<script>addRow("32 - Bonus Track Da Konoyaro!.mp3","32%20-%20Bonus%20Track%20Da%20Konoyaro!.mp3",0,3027648,"2.9 MB",1657495324,"7/10/22, 11:22:04 PM");</script>
+<script>addRow("32 - Mazuha Omae ga Kaware! Ja Nakya Nani mo Kawara nee!.mp3","32%20-%20Mazuha%20Omae%20ga%20Kaware!%20Ja%20Nakya%20Nani%20mo%20Kawara%20nee!.mp3",0,3739776,"3.6 MB",1657495347,"7/10/22, 11:22:27 PM");</script>
+<script>addRow("32 - Omae no Daiji na Renchuu Nara Iru daro Omae no Naka ni.mp3","32%20-%20Omae%20no%20Daiji%20na%20Renchuu%20Nara%20Iru%20daro%20Omae%20no%20Naka%20ni.mp3",0,5210240,"5.0 MB",1657495497,"7/10/22, 11:24:57 PM");</script>
+<script>addRow("32 Watashi Wa Saigo no Ippon ni Natte Mo Ore Nai Ne.mp3","32%20Watashi%20Wa%20Saigo%20no%20Ippon%20ni%20Natte%20Mo%20Ore%20Nai%20Ne.mp3",0,4513009,"4.3 MB",1657495423,"7/10/22, 11:23:43 PM");</script>
+<script>addRow("32. Ani He No Omoi -Hijikata No Kako-.mp3","32.%20Ani%20He%20No%20Omoi%20-Hijikata%20No%20Kako-.mp3",0,6409760,"6.1 MB",1657495607,"7/10/22, 11:26:47 PM");</script>
+<script>addRow("33 - Nando mo Onaji Koto Iwasen Janee yo.mp3","33%20-%20Nando%20mo%20Onaji%20Koto%20Iwasen%20Janee%20yo.mp3",0,4337792,"4.1 MB",1657495412,"7/10/22, 11:23:32 PM");</script>
+<script>addRow("33 - Wake no Wakara nai Yatsu ne.mp3","33%20-%20Wake%20no%20Wakara%20nai%20Yatsu%20ne.mp3",0,4814848,"4.6 MB",1657495449,"7/10/22, 11:24:09 PM");</script>
+<script>addRow("34 - MR.RAINDROP (TV version).mp3","34%20-%20MR.RAINDROP%20(TV%20version).mp3",0,3633152,"3.5 MB",1657495340,"7/10/22, 11:22:20 PM");</script>
+<script>addRow("34 - Yami yo no Mushi wa Hikari ni Tsudou.mp3","34%20-%20Yami%20yo%20no%20Mushi%20wa%20Hikari%20ni%20Tsudou.mp3",0,4649088,"4.4 MB",1657495435,"7/10/22, 11:23:55 PM");</script>
+<script>addRow("35 - Ore mo, Mou Jump Sotsugyou Shi Nakya Ike nee Toshi da yo naa.mp3","35%20-%20Ore%20mo,%20Mou%20Jump%20Sotsugyou%20Shi%20Nakya%20Ike%20nee%20Toshi%20da%20yo%20naa.mp3",0,4499456,"4.3 MB",1657495422,"7/10/22, 11:23:42 PM");</script>
+<script>addRow("35 - Ttaku Shikata nee naa, Ikuze!!.mp3","35%20-%20Ttaku%20Shikata%20nee%20naa,%20Ikuze!!.mp3",0,4239488,"4.0 MB",1657495404,"7/10/22, 11:23:24 PM");</script>
+<script>addRow("36 - Katoken Samba!.mp3","36%20-%20Katoken%20Samba!.mp3",0,5222528,"5.0 MB",1657495499,"7/10/22, 11:24:59 PM");</script>
+<script>addRow("36 - Mada Warete nee Janeeka, Shabontama.mp3","36%20-%20Mada%20Warete%20nee%20Janeeka,%20Shabontama.mp3",0,4645068,"4.4 MB",1657495434,"7/10/22, 11:23:54 PM");</script>
+<script>addRow("37 - Kueru Toki ni Kuttoka nai to ne.mp3","37%20-%20Kueru%20Toki%20ni%20Kuttoka%20nai%20to%20ne.mp3",0,3686528,"3.5 MB",1657495343,"7/10/22, 11:22:23 PM");</script>
+<script>addRow("38 - Kore wa Kore de Yoi desu ne.mp3","38%20-%20Kore%20wa%20Kore%20de%20Yoi%20desu%20ne.mp3",0,4114560,"3.9 MB",1657495385,"7/10/22, 11:23:05 PM");</script>
+<script>addRow("39 - Saa! Koitsude Shime daze!.mp3","39%20-%20Saa!%20Koitsude%20Shime%20daze!.mp3",0,534656,"522 kB",1657495160,"7/10/22, 11:19:20 PM");</script>
+<script>addRow("4 Sakurane (PikoLess Version) .mp3","4%20Sakurane%20(PikoLess%20Version)%20.mp3",0,9878746,"9.4 MB",1657495964,"7/10/22, 11:32:44 PM");</script>
+<script>addRow("4 WAVE [TVsize].mp3","4%20WAVE%20%5BTVsize%5D.mp3",0,3817244,"3.6 MB",1657495352,"7/10/22, 11:22:32 PM");</script>
+<script>addRow("4. Baransudoru (Instrumental).mp3","4.%20Baransudoru%20(Instrumental).mp3",0,10496531,"10.0 MB",1657496032,"7/10/22, 11:33:52 PM");</script>
+<script>addRow("4. Sakura, Sakihokore [Inst].mp3","4.%20Sakura,%20Sakihokore%20%5BInst%5D.mp3",0,10050967,"9.6 MB",1657495999,"7/10/22, 11:33:19 PM");</script>
+<script>addRow("40 - Banjiya Blues.mp3","40%20-%20Banjiya%20Blues.mp3",0,9547904,"9.1 MB",1657495911,"7/10/22, 11:31:51 PM");</script>
+<script>addRow("5 Kotoba Meteor (PikoLess Version) .mp3","5%20Kotoba%20Meteor%20(PikoLess%20Version)%20.mp3",0,7710592,"7.4 MB",1657495703,"7/10/22, 11:28:23 PM");</script>
+<script>addRow("6 Last chime (PikoLess Version).mp3","6%20Last%20chime%20(PikoLess%20Version).mp3",0,10381357,"9.9 MB",1657496026,"7/10/22, 11:33:46 PM");</script>
+<script>addRow("Drama 01 (2).mp3","Drama%2001%20(2).mp3",0,6017745,"5.7 MB",1657495581,"7/10/22, 11:26:21 PM");</script>
+<script>addRow("Drama 01 (3).mp3","Drama%2001%20(3).mp3",0,5212027,"5.0 MB",1657495498,"7/10/22, 11:24:58 PM");</script>
+<script>addRow("Drama 01 (4).mp3","Drama%2001%20(4).mp3",0,2820353,"2.7 MB",1657495311,"7/10/22, 11:21:51 PM");</script>
+<script>addRow("Drama 01 (5).mp3","Drama%2001%20(5).mp3",0,2412118,"2.3 MB",1657495249,"7/10/22, 11:20:49 PM");</script>
+<script>addRow("Drama 01 (6).mp3","Drama%2001%20(6).mp3",0,2073571,"2.0 MB",1657495194,"7/10/22, 11:19:54 PM");</script>
+<script>addRow("Drama 01.mp3","Drama%2001.mp3",0,7267499,"6.9 MB",1657495665,"7/10/22, 11:27:45 PM");</script>
+<script>addRow("Drama 02 (2).mp3","Drama%2002%20(2).mp3",0,2831011,"2.7 MB",1657495312,"7/10/22, 11:21:52 PM");</script>
+<script>addRow("Drama 02 (3).mp3","Drama%2002%20(3).mp3",0,2737709,"2.6 MB",1657495296,"7/10/22, 11:21:36 PM");</script>
+<script>addRow("Drama 02 (4).mp3","Drama%2002%20(4).mp3",0,1893013,"1.8 MB",1657495183,"7/10/22, 11:19:43 PM");</script>
+<script>addRow("Drama 02 (5).mp3","Drama%2002%20(5).mp3",0,1556138,"1.5 MB",1657495178,"7/10/22, 11:19:38 PM");</script>
+<script>addRow("Drama 02 (6).mp3","Drama%2002%20(6).mp3",0,25491564,"24.3 MB",1657496832,"7/10/22, 11:47:12 PM");</script>
+<script>addRow("Drama 02.mp3","Drama%2002.mp3",0,3877794,"3.7 MB",1657495370,"7/10/22, 11:22:50 PM");</script>
+<script>addRow("Drama 03 (2).mp3","Drama%2003%20(2).mp3",0,4983403,"4.8 MB",1657495478,"7/10/22, 11:24:38 PM");</script>
+<script>addRow("Drama 03 (3).mp3","Drama%2003%20(3).mp3",0,2873963,"2.7 MB",1657495308,"7/10/22, 11:21:48 PM");</script>
+<script>addRow("Drama 03 (4).mp3","Drama%2003%20(4).mp3",0,2192272,"2.1 MB",1657495214,"7/10/22, 11:20:14 PM");</script>
+<script>addRow("Drama 03 (5).mp3","Drama%2003%20(5).mp3",0,30754715,"29.3 MB",1657496862,"7/10/22, 11:47:42 PM");</script>
+<script>addRow("Drama 03 (6).mp3","Drama%2003%20(6).mp3",0,12187446,"11.6 MB",1657496811,"7/10/22, 11:46:51 PM");</script>
+<script>addRow("Drama 03.mp3","Drama%2003.mp3",0,5468129,"5.2 MB",1657495526,"7/10/22, 11:25:26 PM");</script>
+<script>addRow("Drama 04 (2).mp3","Drama%2004%20(2).mp3",0,2732693,"2.6 MB",1657495293,"7/10/22, 11:21:33 PM");</script>
+<script>addRow("Drama 04 (3).mp3","Drama%2004%20(3).mp3",0,1235981,"1.2 MB",1657495173,"7/10/22, 11:19:33 PM");</script>
+<script>addRow("Drama 04 (4).mp3","Drama%2004%20(4).mp3",0,33284413,"31.7 MB",1657496897,"7/10/22, 11:48:17 PM");</script>
+<script>addRow("Drama 04 (5).mp3","Drama%2004%20(5).mp3",0,28656500,"27.3 MB",1657496779,"7/10/22, 11:46:19 PM");</script>
+<script>addRow("Drama 04 (6).mp3","Drama%2004%20(6).mp3",0,9224537,"8.8 MB",1657496701,"7/10/22, 11:45:01 PM");</script>
+<script>addRow("Drama 04.mp3","Drama%2004.mp3",0,3694835,"3.5 MB",1657495344,"7/10/22, 11:22:24 PM");</script>
+<script>addRow("Drama 05 (2).mp3","Drama%2005%20(2).mp3",0,3355452,"3.2 MB",1657495331,"7/10/22, 11:22:11 PM");</script>
+<script>addRow("Drama 05 (3).mp3","Drama%2005%20(3).mp3",0,2420060,"2.3 MB",1657495254,"7/10/22, 11:20:54 PM");</script>
+<script>addRow("Drama 05 (4).mp3","Drama%2005%20(4).mp3",0,2311808,"2.2 MB",1657495240,"7/10/22, 11:20:40 PM");</script>
+<script>addRow("Drama 05 (5).mp3","Drama%2005%20(5).mp3",0,16928984,"16.1 MB",1657496786,"7/10/22, 11:46:26 PM");</script>
+<script>addRow("Drama 05 (6).mp3","Drama%2005%20(6).mp3",0,24950307,"23.8 MB",1657496681,"7/10/22, 11:44:41 PM");</script>
+<script>addRow("Drama 05.mp3","Drama%2005.mp3",0,5766970,"5.5 MB",1657495570,"7/10/22, 11:26:10 PM");</script>
+<script>addRow("Drama 06 (2).mp3","Drama%2006%20(2).mp3",0,3928056,"3.7 MB",1657495372,"7/10/22, 11:22:52 PM");</script>
+<script>addRow("Drama 06 (3).mp3","Drama%2006%20(3).mp3",0,2262489,"2.2 MB",1657495227,"7/10/22, 11:20:27 PM");</script>
+<script>addRow("Drama 06 (4).mp3","Drama%2006%20(4).mp3",0,1754251,"1.7 MB",1657495180,"7/10/22, 11:19:40 PM");</script>
+<script>addRow("Drama 06 (5).mp3","Drama%2006%20(5).mp3",0,33927025,"32.4 MB",1657496757,"7/10/22, 11:45:57 PM");</script>
+<script>addRow("Drama 06 (6).mp3","Drama%2006%20(6).mp3",0,17599808,"16.8 MB",1657496749,"7/10/22, 11:45:49 PM");</script>
+<script>addRow("Drama 06.mp3","Drama%2006.mp3",0,5677109,"5.4 MB",1657495543,"7/10/22, 11:25:43 PM");</script>
+<script>addRow("Drama 07 (2).mp3","Drama%2007%20(2).mp3",0,8298813,"7.9 MB",1657495739,"7/10/22, 11:28:59 PM");</script>
+<script>addRow("Drama 07 (3).mp3","Drama%2007%20(3).mp3",0,3544472,"3.4 MB",1657495337,"7/10/22, 11:22:17 PM");</script>
+<script>addRow("Drama 07 (4).mp3","Drama%2007%20(4).mp3",0,3091302,"2.9 MB",1657495328,"7/10/22, 11:22:08 PM");</script>
+<script>addRow("Drama 07 (5).mp3","Drama%2007%20(5).mp3",0,2664566,"2.5 MB",1657495288,"7/10/22, 11:21:28 PM");</script>
+<script>addRow("Drama 07 (6).mp3","Drama%2007%20(6).mp3",0,1422809,"1.4 MB",1657495176,"7/10/22, 11:19:36 PM");</script>
+<script>addRow("Drama 07.mp3","Drama%2007.mp3",0,14996131,"14.3 MB",1657496311,"7/10/22, 11:38:31 PM");</script>
+<script>addRow("Drama 08 (2).mp3","Drama%2008%20(2).mp3",0,3001539,"2.9 MB",1657495319,"7/10/22, 11:21:59 PM");</script>
+<script>addRow("Drama 08 (3).mp3","Drama%2008%20(3).mp3",0,1605457,"1.5 MB",1657495179,"7/10/22, 11:19:39 PM");</script>
+<script>addRow("Drama 08 (4).mp3","Drama%2008%20(4).mp3",0,793362,"775 kB",1657495163,"7/10/22, 11:19:23 PM");</script>
+<script>addRow("Drama 08 (5).mp3","Drama%2008%20(5).mp3",0,13685206,"13.1 MB",1657496851,"7/10/22, 11:47:31 PM");</script>
+<script>addRow("Drama 08.mp3","Drama%2008.mp3",0,5479103,"5.2 MB",1657495528,"7/10/22, 11:25:28 PM");</script>
+<script>addRow("Drama 09 (2).mp3","Drama%2009%20(2).mp3",0,1302855,"1.2 MB",1657495174,"7/10/22, 11:19:34 PM");</script>
+<script>addRow("Drama 09 (3).mp3","Drama%2009%20(3).mp3",0,1035361,"1011 kB",1657495169,"7/10/22, 11:19:29 PM");</script>
+<script>addRow("Drama 09 (4).mp3","Drama%2009%20(4).mp3",0,614894,"600 kB",1657495161,"7/10/22, 11:19:21 PM");</script>
+<script>addRow("Drama 09.mp3","Drama%2009.mp3",0,2575851,"2.5 MB",1657495280,"7/10/22, 11:21:20 PM");</script>
+<script>addRow("Drama 10 (2).mp3","Drama%2010%20(2).mp3",0,1186137,"1.1 MB",1657495172,"7/10/22, 11:19:32 PM");</script>
+<script>addRow("Drama 10 (3).mp3","Drama%2010%20(3).mp3",0,479475,"468 kB",1657495159,"7/10/22, 11:19:19 PM");</script>
+<script>addRow("Drama 10.mp3","Drama%2010.mp3",0,2907818,"2.8 MB",1657495316,"7/10/22, 11:21:56 PM");</script>
+<script>addRow("Drama 11.mp3","Drama%2011.mp3",0,832233,"813 kB",1657495164,"7/10/22, 11:19:24 PM");</script>
+<script>addRow("Drama 12.mp3","Drama%2012.mp3",0,1160331,"1.1 MB",1657495171,"7/10/22, 11:19:31 PM");</script>
+<script>addRow("Drama 13.mp3","Drama%2013.mp3",0,2442211,"2.3 MB",1657495263,"7/10/22, 11:21:03 PM");</script>
